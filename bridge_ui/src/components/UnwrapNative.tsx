@@ -52,8 +52,8 @@ import {
 } from "../utils/consts";
 import parseError from "../utils/parseError";
 import ButtonWithLoader from "./ButtonWithLoader";
-import EthereumSignerKey from "./EthereumSignerKey";
 import HeaderText from "./HeaderText";
+import EthereumSignerKey from "./Wallet/EthereumSignerKey";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {

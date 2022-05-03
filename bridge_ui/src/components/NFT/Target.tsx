@@ -34,11 +34,11 @@ import {
 } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
 import ChainSelect from "../ChainSelect";
-import KeyAndBalance from "../KeyAndBalance";
+import ChainWarningMessage from "../ChainWarningMessage";
 import LowBalanceWarning from "../LowBalanceWarning";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
-import ChainWarningMessage from "../ChainWarningMessage";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 
 const useStyles = makeStyles((theme) => ({
   transferField: {

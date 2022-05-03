@@ -51,8 +51,8 @@ import {
   isValidEthereumAddress,
 } from "../utils/ethereum";
 import HeaderText from "./HeaderText";
-import KeyAndBalance from "./KeyAndBalance";
 import NFTViewer from "./TokenSelectors/NFTViewer";
+import KeyAndBalance from "./Wallet/KeyAndBalance";
 
 const useStyles = makeStyles((theme) => ({
   mainCard: {

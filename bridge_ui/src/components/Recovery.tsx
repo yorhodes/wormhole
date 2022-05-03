@@ -75,8 +75,8 @@ import { getSignedVAAWithRetry } from "../utils/getSignedVAAWithRetry";
 import parseError from "../utils/parseError";
 import ButtonWithLoader from "./ButtonWithLoader";
 import ChainSelect from "./ChainSelect";
-import KeyAndBalance from "./KeyAndBalance";
 import RelaySelector from "./RelaySelector";
+import KeyAndBalance from "./Wallet/KeyAndBalance";
 
 const useStyles = makeStyles((theme) => ({
   mainCard: {

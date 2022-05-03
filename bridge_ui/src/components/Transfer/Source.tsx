@@ -38,14 +38,14 @@ import {
 import ButtonWithLoader from "../ButtonWithLoader";
 import ChainSelect from "../ChainSelect";
 import ChainSelectArrow from "../ChainSelectArrow";
-import KeyAndBalance from "../KeyAndBalance";
+import ChainWarningMessage from "../ChainWarningMessage";
 import LowBalanceWarning from "../LowBalanceWarning";
 import NumberTextField from "../NumberTextField";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
 import { TokenSelector } from "../TokenSelectors/SourceTokenSelector";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import SourceAssetWarning from "./SourceAssetWarning";
-import ChainWarningMessage from "../ChainWarningMessage";
 
 const useStyles = makeStyles((theme) => ({
   chainSelectWrapper: {

@@ -1,5 +1,5 @@
 import { Typography } from "@material-ui/core";
-import { useEthereumProvider } from "../contexts/EthereumProviderContext";
+import { useEthereumProvider } from "../../contexts/EthereumProviderContext";
 import ToggleConnectedButton from "./ToggleConnectedButton";
 
 const EthereumSignerKey = () => {

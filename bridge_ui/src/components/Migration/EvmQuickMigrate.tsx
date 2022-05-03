@@ -20,10 +20,10 @@ import useIsWalletReady from "../../hooks/useIsWalletReady";
 import { COLORS } from "../../muiTheme";
 import { CHAINS_BY_ID, getMigrationAssetMap } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
-import EthereumSignerKey from "../EthereumSignerKey";
 import HeaderText from "../HeaderText";
 import ShowTx from "../ShowTx";
 import SmartAddress from "../SmartAddress";
+import EthereumSignerKey from "../Wallet/EthereumSignerKey";
 
 const useStyles = makeStyles((theme) => ({
   spacer: {

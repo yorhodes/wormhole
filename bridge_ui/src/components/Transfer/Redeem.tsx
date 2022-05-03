@@ -51,12 +51,12 @@ import {
   WROSE_ADDRESS,
 } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
 import SmartAddress from "../SmartAddress";
 import { SolanaCreateAssociatedAddressAlternate } from "../SolanaCreateAssociatedAddress";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import AddToMetamask from "./AddToMetamask";
 import RedeemPreview from "./RedeemPreview";
 import WaitingForWalletMessage from "./WaitingForWalletMessage";

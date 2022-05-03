@@ -26,9 +26,9 @@ import useOriginalAsset, { OriginalAssetInfo } from "../hooks/useOriginalAsset";
 import { COLORS } from "../muiTheme";
 import { BETA_CHAINS, CHAINS, CHAINS_BY_ID } from "../utils/consts";
 import HeaderText from "./HeaderText";
-import KeyAndBalance from "./KeyAndBalance";
 import SmartAddress from "./SmartAddress";
 import { RegisterNowButtonCore } from "./Transfer/RegisterNowButton";
+import KeyAndBalance from "./Wallet/KeyAndBalance";
 
 const useStyles = makeStyles((theme) => ({
   flexBox: {

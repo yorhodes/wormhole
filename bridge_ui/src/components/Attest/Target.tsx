@@ -14,8 +14,8 @@ import {
 import { CHAINS, CHAINS_BY_ID } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
 import ChainSelect from "../ChainSelect";
-import KeyAndBalance from "../KeyAndBalance";
 import LowBalanceWarning from "../LowBalanceWarning";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 
 const useStyles = makeStyles((theme) => ({
   alert: {

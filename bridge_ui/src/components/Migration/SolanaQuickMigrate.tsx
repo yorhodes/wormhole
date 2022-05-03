@@ -28,7 +28,7 @@ import HeaderText from "../HeaderText";
 import ShowTx from "../ShowTx";
 import SmartAddress from "../SmartAddress";
 import SolanaCreateAssociatedAddress from "../SolanaCreateAssociatedAddress";
-import SolanaWalletKey from "../SolanaWalletKey";
+import SolanaWalletKey from "../Wallet/SolanaWalletKey";
 
 const useStyles = makeStyles((theme) => ({
   spacer: {

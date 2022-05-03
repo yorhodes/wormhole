@@ -4,20 +4,20 @@ import { useSelector } from "react-redux";
 import { useHandleNFTTransfer } from "../../hooks/useHandleNFTTransfer";
 import useIsWalletReady from "../../hooks/useIsWalletReady";
 import {
-  selectNFTSourceWalletAddress,
+  selectNFTIsSendComplete,
   selectNFTSourceChain,
+  selectNFTSourceWalletAddress,
   selectNFTTargetError,
   selectNFTTransferTx,
-  selectNFTIsSendComplete,
 } from "../../store/selectors";
 import { CHAINS_BY_ID, CLUSTER } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
 import ShowTx from "../ShowTx";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
 import TransactionProgress from "../TransactionProgress";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import WaitingForWalletMessage from "./WaitingForWalletMessage";
 
 function Send() {

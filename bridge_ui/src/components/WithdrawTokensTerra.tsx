@@ -1,14 +1,3 @@
-import { useCallback, useState } from "react";
-import { MsgExecuteContract } from "@terra-money/terra.js";
-import {
-  ConnectedWallet,
-  useConnectedWallet,
-} from "@terra-money/wallet-provider";
-import {
-  SUPPORTED_TERRA_TOKENS,
-  TERRA_TOKEN_BRIDGE_ADDRESS,
-} from "../utils/consts";
-import TerraWalletKey from "./TerraWalletKey";
 import {
   Container,
   FormControl,
@@ -19,15 +8,26 @@ import {
   Select,
   Typography,
 } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
+import { MsgExecuteContract } from "@terra-money/terra.js";
+import {
+  ConnectedWallet,
+  useConnectedWallet,
+} from "@terra-money/wallet-provider";
+import { useSnackbar } from "notistack";
+import { useCallback, useState } from "react";
+import { useSelector } from "react-redux";
+import { COLORS } from "../muiTheme";
+import { selectTerraFeeDenom } from "../store/selectors";
+import {
+  SUPPORTED_TERRA_TOKENS,
+  TERRA_TOKEN_BRIDGE_ADDRESS,
+} from "../utils/consts";
 import { postWithFees, waitForTerraExecution } from "../utils/terra";
 import ButtonWithLoader from "./ButtonWithLoader";
-import { useSnackbar } from "notistack";
-import { Alert } from "@material-ui/lab";
-import { useSelector } from "react-redux";
-import { selectTerraFeeDenom } from "../store/selectors";
-import TerraFeeDenomPicker from "./TerraFeeDenomPicker";
 import HeaderText from "./HeaderText";
-import { COLORS } from "../muiTheme";
+import TerraFeeDenomPicker from "./TerraFeeDenomPicker";
+import TerraWalletKey from "./Wallet/TerraWalletKey";
 
 const useStyles = makeStyles((theme) => ({
   formControl: {

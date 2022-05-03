@@ -8,10 +8,10 @@ import { useEthereumProvider } from "../../contexts/EthereumProviderContext";
 import useEthereumMigratorInformation from "../../hooks/useEthereumMigratorInformation";
 import useIsWalletReady from "../../hooks/useIsWalletReady";
 import ButtonWithLoader from "../ButtonWithLoader";
-import EthereumSignerKey from "../EthereumSignerKey";
 import NumberTextField from "../NumberTextField";
 import ShowTx from "../ShowTx";
 import SmartAddress from "../SmartAddress";
+import EthereumSignerKey from "../Wallet/EthereumSignerKey";
 
 const useStyles = makeStyles((theme) => ({
   spacer: {

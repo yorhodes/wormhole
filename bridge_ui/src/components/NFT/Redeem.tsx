@@ -5,10 +5,10 @@ import useIsWalletReady from "../../hooks/useIsWalletReady";
 import { selectNFTTargetChain } from "../../store/selectors";
 import { CLUSTER } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import WaitingForWalletMessage from "./WaitingForWalletMessage";
 
 function Redeem() {

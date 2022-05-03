@@ -10,8 +10,8 @@ import {
   selectAttestTargetChain,
 } from "../../store/selectors";
 import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import WaitingForWalletMessage from "./WaitingForWalletMessage";
 
 const useStyles = makeStyles((theme) => ({

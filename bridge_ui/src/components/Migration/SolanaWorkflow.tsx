@@ -25,7 +25,7 @@ import SmartAddress from "../SmartAddress";
 import SolanaCreateAssociatedAddress, {
   useAssociatedAccountExistsState,
 } from "../SolanaCreateAssociatedAddress";
-import SolanaWalletKey from "../SolanaWalletKey";
+import SolanaWalletKey from "../Wallet/SolanaWalletKey";
 
 const useStyles = makeStyles(() => ({
   mainPaper: {

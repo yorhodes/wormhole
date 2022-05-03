@@ -27,7 +27,6 @@ import { CHAINS, CLUSTER } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
 import ChainSelect from "../ChainSelect";
 import FeeMethodSelector from "../FeeMethodSelector";
-import KeyAndBalance from "../KeyAndBalance";
 import LowBalanceWarning from "../LowBalanceWarning";
 import SmartAddress from "../SmartAddress";
 import SolanaCreateAssociatedAddress, {
@@ -35,6 +34,7 @@ import SolanaCreateAssociatedAddress, {
 } from "../SolanaCreateAssociatedAddress";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import RegisterNowButton from "./RegisterNowButton";
 
 const useStyles = makeStyles((theme) => ({

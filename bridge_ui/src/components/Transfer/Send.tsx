@@ -25,12 +25,12 @@ import {
 } from "../../store/selectors";
 import { CHAINS_BY_ID, CLUSTER } from "../../utils/consts";
 import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
 import ShowTx from "../ShowTx";
 import SolanaTPSWarning from "../SolanaTPSWarning";
 import StepDescription from "../StepDescription";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
 import TransactionProgress from "../TransactionProgress";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
 import SendConfirmationDialog from "./SendConfirmationDialog";
 import WaitingForWalletMessage from "./WaitingForWalletMessage";
 

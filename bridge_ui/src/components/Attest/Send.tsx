@@ -1,6 +1,6 @@
 import { CHAIN_ID_SOLANA, CHAIN_ID_TERRA } from "@certusone/wormhole-sdk";
-import { Alert } from "@material-ui/lab";
 import { Link, makeStyles } from "@material-ui/core";
+import { Alert } from "@material-ui/lab";
 import { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useHandleAttest } from "../../hooks/useHandleAttest";
@@ -12,12 +12,12 @@ import {
   selectAttestSourceAsset,
   selectAttestSourceChain,
 } from "../../store/selectors";
-import ButtonWithLoader from "../ButtonWithLoader";
-import KeyAndBalance from "../KeyAndBalance";
-import TransactionProgress from "../TransactionProgress";
-import WaitingForWalletMessage from "./WaitingForWalletMessage";
 import { SOLANA_TOKEN_METADATA_PROGRAM_URL } from "../../utils/consts";
+import ButtonWithLoader from "../ButtonWithLoader";
 import TerraFeeDenomPicker from "../TerraFeeDenomPicker";
+import TransactionProgress from "../TransactionProgress";
+import KeyAndBalance from "../Wallet/KeyAndBalance";
+import WaitingForWalletMessage from "./WaitingForWalletMessage";
 
 const useStyles = makeStyles((theme) => ({
   alert: {
