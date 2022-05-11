@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+### Added
+
+Payload 3 (Contract-Controlled Transfer) support
+
 ## 0.3.1
 
 ### Added
