@@ -15,6 +15,16 @@ build: node_modules ${SOURCE_FILES}
 	touch -m build
 	npm run build
 
+flattened/%.sol: contracts/%.sol node_modules
+	@mkdir -p $(dir $@)
+    # We remove the license (SPDX) lines and ABIEncoderV2 lines because they
+    # break compilation in the flattened file if there are multiple conflicting
+    # declarations.
+	npx truffle-flattener $< | grep -v SPDX | grep -v ABIEncoderV2 > $@
+
+.PHONY: flattened
+flattened: $(patsubst contracts/%, flattened/%, $(SOURCE_FILES))
+
 .env: .env.test
 	cp $< $@
 
@@ -30,4 +40,4 @@ test-upgrade: build .env dependencies
 	./simulate_upgrades
 
 clean:
-	rm -rf ganache.log .env node_modules build
+	rm -rf ganache.log .env node_modules build flattened
