@@ -4,11 +4,15 @@
 pragma solidity ^0.8.0;
 
 import "../contracts/Messages.sol";
+import "../contracts/Setters.sol";
 import "../contracts/Structs.sol";
 import "forge-std/Test.sol";
 
-contract TestMessages is Messages, Test {
+contract TestMessages is Messages, Test, Setters {
   address constant testGuardianPub = 0xbeFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe;
+
+  // A valid VM with one signature from the testGuardianPublic key
+  bytes validVM = hex"01000000000100867b55fec41778414f0683e80a430b766b78801b7070f9198ded5e62f48ac7a44b379a6cf9920e42dbd06c5ebf5ec07a934a00a572aefc201e9f91c33ba766d900000003e800000001000b0000000000000000000000000000000000000000000000000000000000000eee00000000000005390faaaa";
 
   function testQuorum() public {
     assertEq(quorum(0), 1);
@@ -67,5 +71,38 @@ contract TestMessages is Messages, Test {
     badSigs[1] = bad2;
     vm.expectRevert(bytes("guardian index out of bounds"));
     verifySignatures(0, badSigs, guardianSet);
+  }
+
+  // This test checks the possibility of getting a unsigned message verified through verifyVM
+  function testHashMismatchedVMIsNotVerified() public {
+    // Set the initial guardian set
+    address[] memory initialGuardians = new address[](1);
+    initialGuardians[0] = testGuardianPub;
+
+    // Create a guardian set
+    Structs.GuardianSet memory initialGuardianSet = Structs.GuardianSet({
+      keys: initialGuardians,
+      expirationTime: 0
+    });
+
+    storeGuardianSet(initialGuardianSet, uint32(0));
+
+    // Confirm that the test VM is valid
+    (Structs.VM memory parsedValidVm, bool valid, string memory reason) = this.parseAndVerifyVM(validVM);
+    require(valid, reason);
+    assertEq(valid, true);
+    assertEq(reason, "");
+
+    // Manipulate the payload of the vm
+    Structs.VM memory invalidVm = parsedValidVm;
+    invalidVm.payload = abi.encodePacked(
+        parsedValidVm.payload,
+        "malicious bytes in payload"
+    );
+
+    // Confirm that the verifyVM fails on invalid VM
+    (valid, reason) = this.verifyVM(invalidVm);
+    assertEq(valid, false);
+    assertEq(reason, "vm.hash doesn't match body");
   }
 }
