@@ -3,8 +3,6 @@ module wormhole::myvaa {
     use sui::tx_context::TxContext;
     //use 0x1::secp256k1;
 
-    use wormhole::myu16::{U16};
-    use wormhole::myu32::{U32};
     use wormhole::deserialize;
     use wormhole::cursor;
     use wormhole::guardian_pubkey;
@@ -36,13 +34,13 @@ module wormhole::myvaa {
 
     struct VAA {
         /// Header
-        guardian_set_index: U32,
+        guardian_set_index: u32,
         signatures:         vector<Signature>,
 
         /// Body
-        timestamp:          U32,
-        nonce:              U32,
-        emitter_chain:      U16,
+        timestamp:          u32,
+        nonce:              u32,
+        emitter_chain:      u16,
         emitter_address:    ExternalAddress,
         sequence:           u64,
         consistency_level:  u8,
@@ -107,11 +105,11 @@ module wormhole::myvaa {
         }
     }
 
-    public fun get_guardian_set_index(vaa: &VAA): U32 {
+    public fun get_guardian_set_index(vaa: &VAA): u32 {
          vaa.guardian_set_index
     }
 
-    public fun get_timestamp(vaa: &VAA): U32 {
+    public fun get_timestamp(vaa: &VAA): u32 {
          vaa.timestamp
     }
 
@@ -123,7 +121,7 @@ module wormhole::myvaa {
          vaa.hash
     }
 
-    public fun get_emitter_chain(vaa: &VAA): U16 {
+    public fun get_emitter_chain(vaa: &VAA): u16 {
          vaa.emitter_chain
     }
 
@@ -244,7 +242,6 @@ module wormhole::vaa_test {
     use wormhole::guardian_set_upgrade::{do_upgrade_test};
     use wormhole::state::{Self, State, test_init};
     use wormhole::structs::{Self};
-    use wormhole::myu32::{Self as u32};
     //use wormhole::myvaa::{Self as vaa};
 
     ///// A test VAA signed by the first guardian set (index 0) containing guardian a single
@@ -267,12 +264,12 @@ module wormhole::vaa_test {
             let state = take_from_address<State>(&mut test, admin);
             // first store a guardian set within State at index 0
             let initial_guardian = vector[structs::create_guardian(x"beFA429d57cD18b7F8A4d91A2da9AB4AF05d0FBe")];
-            state::store_guardian_set(&mut state, u32::from_u64(0), structs::create_guardian_set(u32::from_u64(0), initial_guardian));
+            state::store_guardian_set(&mut state, 0, structs::create_guardian_set(0, initial_guardian));
             let new_guardians = vector[structs::create_guardian(x"71aa1be1d36cafe3867910f99c09e347899c19c3")];
 
             // upgrade guardian set
-            do_upgrade_test(&mut state, u32::from_u64(1), new_guardians, ctx(&mut test));
-            assert!(state::get_current_guardian_set_index(&state)==u32::from_u64(1), 0);
+            do_upgrade_test(&mut state, 1, new_guardians, ctx(&mut test));
+            assert!(state::get_current_guardian_set_index(&state) == 1, 0);
 
             return_to_address(admin, state);
         };

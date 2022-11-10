@@ -29,7 +29,7 @@ module token_bridge::treasury {
     }
 
     // #[test_only]
-    // public entry fun init_unparametrized_object(bridge_state: &mut BridgeState, ctx: &mut TxContext){
+    // public entry fun init_unparametrized_object(bridge_state: &mut BridgeState, ctx: &mut TxContext) {
     //     transfer::transfer_to_object<UnparametrizedObject, BridgeState>(UnparametrizedObject{id: object::new(ctx)}, bridge_state);
     // }
 
@@ -37,7 +37,7 @@ module token_bridge::treasury {
          TreasuryCapStore<CoinType> { id: object::new(ctx), cap: cap }
     }
 
-    public fun deposit<CoinType>(store: &mut CoinStore<CoinType>, coin: Coin<CoinType>){
+    public fun deposit<CoinType>(store: &mut CoinStore<CoinType>, coin: Coin<CoinType>) {
         coin::join<CoinType>(&mut store.coins, coin);
     }
 

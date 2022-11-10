@@ -60,7 +60,7 @@ module token_bridge::complete_transfer {
         let amount = denormalize(transfer::get_amount(transfer), 0);
 
         let recipient_coins;
-        if (token_chain==this_chain){
+        if (token_chain == this_chain) {
             recipient_coins = bridge_state::withdraw<CoinType>(
                 bridge_state,
                 amount,

@@ -54,7 +54,7 @@ module token_bridge::transfer_tokens {
         )
     }
 
-    public fun transfer_tokens_with_payload<CoinType>(){
+    public fun transfer_tokens_with_payload<CoinType>() {
         //TODO
     }
 

@@ -4,13 +4,8 @@ module wormhole::wormhole {
     use sui::tx_context::{Self, TxContext};
     use sui::transfer::{Self};
 
-    //use wormhole::structs::{create_guardian, create_guardian_set};
     use wormhole::state::{Self, State};
     use wormhole::emitter::{Self};
-
-    // use wormhole::myu16 as u16;
-    // use wormhole::myu32::{Self as u32, U32};
-    // use wormhole::external_address::{Self};
 
     const E_INSUFFICIENT_FEE: u64 = 0;
 
@@ -81,8 +76,8 @@ module wormhole::wormhole {
     // Honestly, unsure if this should survive once we get into code review but it
     // sure makes writing my test script work quite well
     //
-    // This creates a new emitter object and stores it away into the senders context. 
-    // 
+    // This creates a new emitter object and stores it away into the senders context.
+    //
     // You can then use this to call publish_message_free and generate a vaa
 
     public entry fun get_new_emitter(state: &mut State, ctx: &mut TxContext) {

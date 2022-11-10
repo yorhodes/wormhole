@@ -24,7 +24,7 @@ module wormhole::external_address {
         assert!(len <= 32, E_VECTOR_TOO_LONG);
         let ret = vector::empty<u8>();
         let zeros_remaining = 32 - len;
-        while (zeros_remaining > 0){
+        while (zeros_remaining > 0) {
             vector::push_back<u8>(&mut ret, 0);
             zeros_remaining = zeros_remaining - 1;
         };
