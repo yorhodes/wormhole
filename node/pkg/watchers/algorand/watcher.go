@@ -33,8 +33,8 @@ type (
 		algodToken   string
 		appid        uint64
 
-		msgC     chan *common.MessagePublication
-		obsvReqC chan *gossipv1.ObservationRequest
+		msgC     chan<- *common.MessagePublication
+		obsvReqC <-chan *gossipv1.ObservationRequest
 
 		next_round uint64
 	}
@@ -60,8 +60,8 @@ func NewWatcher(
 	algodRPC string,
 	algodToken string,
 	appid uint64,
-	msgC chan *common.MessagePublication,
-	obsvReqC chan *gossipv1.ObservationRequest,
+	msgC chan<- *common.MessagePublication,
+	obsvReqC <-chan *gossipv1.ObservationRequest,
 ) *Watcher {
 	return &Watcher{
 		indexerRPC:   indexerRPC,
