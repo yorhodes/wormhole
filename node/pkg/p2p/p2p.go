@@ -67,8 +67,24 @@ func signedObservationRequestDigest(b []byte) common.Hash {
 	return ethcrypto.Keccak256Hash(append(signedObservationRequestPrefix, b...))
 }
 
-func Run(obsvC chan *gossipv1.SignedObservation, obsvReqC chan *gossipv1.ObservationRequest, obsvReqSendC chan *gossipv1.ObservationRequest, sendC chan []byte, signedInC chan *gossipv1.SignedVAAWithQuorum, priv crypto.PrivKey, gk *ecdsa.PrivateKey, gst *node_common.GuardianSetState, port uint, networkID string, bootstrapPeers string, nodeName string, disableHeartbeatVerify bool, rootCtxCancel context.CancelFunc, gov *governor.ChainGovernor, signedGovCfg chan *gossipv1.SignedChainGovernorConfig,
-	signedGovSt chan *gossipv1.SignedChainGovernorStatus) func(ctx context.Context) error {
+func Run(
+	obsvC chan *gossipv1.SignedObservation,
+	obsvReqC chan *gossipv1.ObservationRequest,
+	obsvReqSendC chan *gossipv1.ObservationRequest,
+	signedInC chan *gossipv1.SignedVAAWithQuorum,
+	priv crypto.PrivKey,
+	gk *ecdsa.PrivateKey,
+	gst *node_common.GuardianSetState,
+	port uint,
+	networkID string,
+	bootstrapPeers string,
+	nodeName string,
+	disableHeartbeatVerify bool,
+	rootCtxCancel context.CancelFunc,
+	gov *governor.ChainGovernor,
+	signedGovCfg chan *gossipv1.SignedChainGovernorConfig,
+	signedGovSt chan *gossipv1.SignedChainGovernorStatus,
+) func(ctx context.Context) error {
 	return func(ctx context.Context) (re error) {
 		logger := supervisor.Logger(ctx)
 
@@ -80,6 +96,8 @@ func Run(obsvC chan *gossipv1.SignedObservation, obsvReqC chan *gossipv1.Observa
 		if err != nil {
 			return fmt.Errorf("failed to create p2p connection manager: %w", err)
 		}
+
+		sendC := make(chan []byte)
 
 		h, err := libp2p.New(
 			// Use the keypair we generated

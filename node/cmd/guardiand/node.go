@@ -821,11 +821,6 @@ func runNode(cmd *cobra.Command, args []string) {
 	var readSetC <-chan *common.GuardianSet = setC
 	var writeSetC chan<- *common.GuardianSet = setC
 
-	// Outbound gossip message queue
-	sendC := make(chan []byte)
-	var readSendC <-chan []byte = sendC
-	var writeSendC chan<- []byte = sendC
-
 	// Inbound observations
 	obsvC := make(chan *gossipv1.SignedObservation, 50)
 	var readObsvC <-chan *gossipv1.SignedObservation = obsvC
@@ -969,7 +964,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Run supervisor.
 	supervisor.New(rootCtx, logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "p2p", p2p.Run(
-			obsvC, obsvReqC, obsvReqSendC, sendC, signedInC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
+			obsvC, obsvReqC, obsvReqSendC, signedInC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
 			return err
 		}
 
@@ -1273,7 +1268,6 @@ func runNode(cmd *cobra.Command, args []string) {
 			db,
 			readMsgC,
 			readSetC,
-			writeSendC,
 			obsvC,
 			writeObsvReqSendC,
 			readInjectC,

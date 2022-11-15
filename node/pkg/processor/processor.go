@@ -84,11 +84,8 @@ type Processor struct {
 	msgC <-chan *common.MessagePublication
 	// setC is a channel of guardian set updates
 	setC <-chan *common.GuardianSet
-
-	// sendC is a channel of outbound messages to broadcast on p2p
-	sendC chan<- []byte
 	// obsvC is a channel of inbound decoded observations from p2p
-	obsvC chan *gossipv1.SignedObservation
+	obsvC <-chan *gossipv1.SignedObservation
 
 	// obsvReqSendC is a send-only channel of outbound re-observation requests to broadcast on p2p
 	obsvReqSendC chan<- *gossipv1.ObservationRequest
@@ -140,8 +137,7 @@ func NewProcessor(
 	db *db.Database,
 	msgC <-chan *common.MessagePublication,
 	setC <-chan *common.GuardianSet,
-	sendC chan<- []byte,
-	obsvC chan *gossipv1.SignedObservation,
+	obsvC <-chan *gossipv1.SignedObservation,
 	obsvReqSendC chan<- *gossipv1.ObservationRequest,
 	injectC <-chan *vaa.VAA,
 	signedInC <-chan *gossipv1.SignedVAAWithQuorum,
@@ -159,7 +155,6 @@ func NewProcessor(
 	return &Processor{
 		msgC:               msgC,
 		setC:               setC,
-		sendC:              sendC,
 		obsvC:              obsvC,
 		obsvReqSendC:       obsvReqSendC,
 		signedInC:          signedInC,
