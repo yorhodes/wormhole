@@ -29,8 +29,8 @@ type (
 		aptosAccount string
 		aptosHandle  string
 
-		msgC     chan *common.MessagePublication
-		obsvReqC chan *gossipv1.ObservationRequest
+		msgC     chan<- *common.MessagePublication
+		obsvReqC <-chan *gossipv1.ObservationRequest
 	}
 )
 
@@ -52,8 +52,8 @@ func NewWatcher(
 	aptosRPC string,
 	aptosAccount string,
 	aptosHandle string,
-	msgC chan *common.MessagePublication,
-	obsvReqC chan *gossipv1.ObservationRequest,
+	msgC chan<- *common.MessagePublication,
+	obsvReqC <-chan *gossipv1.ObservationRequest,
 ) *Watcher {
 	return &Watcher{
 		aptosRPC:     aptosRPC,
