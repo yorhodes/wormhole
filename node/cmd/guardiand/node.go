@@ -813,27 +813,43 @@ func runNode(cmd *cobra.Command, args []string) {
 
 	// Ethereum lock event channel
 	lockC := make(chan *common.MessagePublication)
+	var readLockC <-chan *common.MessagePublication = lockC
+	var writeLockC chan<- *common.MessagePublication = lockC
 
 	// Ethereum incoming guardian set updates
 	setC := make(chan *common.GuardianSet)
+	var readSetC <-chan *common.GuardianSet = setC
+	var writeSetC chan<- *common.GuardianSet = setC
 
 	// Outbound gossip message queue
 	sendC := make(chan []byte)
+	var readSendC <-chan []byte = sendC
+	var writeSendC chan<- []byte = sendC
 
 	// Inbound observations
 	obsvC := make(chan *gossipv1.SignedObservation, 50)
+	var readObsvC <-chan *gossipv1.SignedObservation = obsvC
+	var writeObsvC chan<- *gossipv1.SignedObservation = obsvC
 
 	// Inbound signed VAAs
 	signedInC := make(chan *gossipv1.SignedVAAWithQuorum, 50)
+	var readSignedInC <-chan *gossipv1.SignedVAAWithQuorum = signedInC
+	var writeSignedInC chan<- *gossipv1.SignedVAAWithQuorum = signedInC
 
 	// Inbound observation requests from the p2p service (for all chains)
 	obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
+	var readObsvReqC <-chan *gossipv1.ObservationRequest = obsvReqC
+	var writeObsvReqC chan<- *gossipv1.ObservationRequest = obsvReqC
 
 	// Outbound observation requests
 	obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
+	var readObsvReqSendC <-chan *gossipv1.ObservationRequest = obsvReqSendC
+	var writeObsvReqSendC chan<- *gossipv1.ObservationRequest = obsvReqSendC
 
 	// Injected VAAs (manually generated rather than created via observation)
 	injectC := make(chan *vaa.VAA)
+	var readInjectC <-chan *vaa.VAA = injectC
+	var writeInjectC chan<- *vaa.VAA = injectC
 
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
@@ -1231,13 +1247,13 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		p := processor.NewProcessor(ctx,
 			db,
-			lockC,
-			setC,
-			sendC,
+			readLockC,
+			readSetC,
+			writeSendC,
 			obsvC,
-			obsvReqSendC,
-			injectC,
-			signedInC,
+			writeObsvReqSendC,
+			readInjectC,
+			readSignedInC,
 			gk,
 			gst,
 			*unsafeDevMode,
