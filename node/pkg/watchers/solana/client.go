@@ -25,12 +25,12 @@ import (
 )
 
 type SolanaWatcher struct {
-	contract     solana.PublicKey
-	rpcUrl       string
-	commitment   rpc.CommitmentType
-	messageEvent chan *common.MessagePublication
-	obsvReqC     chan *gossipv1.ObservationRequest
-	rpcClient    *rpc.Client
+	contract   solana.PublicKey
+	rpcUrl     string
+	commitment rpc.CommitmentType
+	msgC       chan *common.MessagePublication
+	obsvReqC   chan *gossipv1.ObservationRequest
+	rpcClient  *rpc.Client
 	// Readiness component
 	readiness readiness.Component
 	// VAA ChainID of the network we're connecting to.
@@ -117,21 +117,21 @@ type PostMessageData struct {
 func NewSolanaWatcher(
 	rpcUrl string,
 	contractAddress solana.PublicKey,
-	messageEvents chan *common.MessagePublication,
+	msgC chan *common.MessagePublication,
 	obsvReqC chan *gossipv1.ObservationRequest,
 	commitment rpc.CommitmentType,
 	readiness readiness.Component,
 	chainID vaa.ChainID) *SolanaWatcher {
 	return &SolanaWatcher{
-		rpcUrl:       rpcUrl,
-		contract:     contractAddress,
-		messageEvent: messageEvents,
-		obsvReqC:     obsvReqC,
-		commitment:   commitment,
-		rpcClient:    rpc.New(rpcUrl),
-		readiness:    readiness,
-		chainID:      chainID,
-		networkName:  vaa.ChainID(chainID).String(),
+		rpcUrl:      rpcUrl,
+		contract:    contractAddress,
+		msgC:        msgC,
+		obsvReqC:    obsvReqC,
+		commitment:  commitment,
+		rpcClient:   rpc.New(rpcUrl),
+		readiness:   readiness,
+		chainID:     chainID,
+		networkName: vaa.ChainID(chainID).String(),
 	}
 }
 
@@ -598,7 +598,7 @@ func (s *SolanaWatcher) processMessageAccount(logger *zap.Logger, data []byte, a
 		zap.Uint8("consistency_level", observation.ConsistencyLevel),
 	)
 
-	s.messageEvent <- observation
+	s.msgC <- observation
 }
 
 // updateLatestBlock() updates the latest block number if the slot passed in is greater than the previous value.

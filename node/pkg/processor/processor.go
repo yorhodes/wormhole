@@ -80,8 +80,8 @@ type PythNetVaaEntry struct {
 }
 
 type Processor struct {
-	// lockC is a channel of observed emitted messages
-	lockC <-chan *common.MessagePublication
+	// msgC is a channel of observed emitted messages
+	msgC <-chan *common.MessagePublication
 	// setC is a channel of guardian set updates
 	setC <-chan *common.GuardianSet
 
@@ -138,7 +138,7 @@ type Processor struct {
 func NewProcessor(
 	ctx context.Context,
 	db *db.Database,
-	lockC <-chan *common.MessagePublication,
+	msgC <-chan *common.MessagePublication,
 	setC <-chan *common.GuardianSet,
 	sendC chan<- []byte,
 	obsvC chan *gossipv1.SignedObservation,
@@ -157,7 +157,7 @@ func NewProcessor(
 ) *Processor {
 
 	return &Processor{
-		lockC:              lockC,
+		msgC:               msgC,
 		setC:               setC,
 		sendC:              sendC,
 		obsvC:              obsvC,
@@ -200,7 +200,7 @@ func (p *Processor) Run(ctx context.Context) error {
 				zap.Strings("set", p.gs.KeysAsHexStrings()),
 				zap.Uint32("index", p.gs.Index))
 			p.gst.Set(p.gs)
-		case k := <-p.lockC:
+		case k := <-p.msgC:
 			if p.governor != nil {
 				if !p.governor.ProcessMsg(k) {
 					continue

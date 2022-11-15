@@ -33,7 +33,7 @@ type (
 		algodToken   string
 		appid        uint64
 
-		msgChan  chan *common.MessagePublication
+		msgC     chan *common.MessagePublication
 		obsvReqC chan *gossipv1.ObservationRequest
 
 		next_round uint64
@@ -60,7 +60,7 @@ func NewWatcher(
 	algodRPC string,
 	algodToken string,
 	appid uint64,
-	lockEvents chan *common.MessagePublication,
+	msgC chan *common.MessagePublication,
 	obsvReqC chan *gossipv1.ObservationRequest,
 ) *Watcher {
 	return &Watcher{
@@ -69,7 +69,7 @@ func NewWatcher(
 		algodRPC:     algodRPC,
 		algodToken:   algodToken,
 		appid:        appid,
-		msgChan:      lockEvents,
+		msgC:         msgC,
 		obsvReqC:     obsvReqC,
 		next_round:   0,
 	}
@@ -137,7 +137,7 @@ func lookAtTxn(e *Watcher, t types.SignedTxnInBlock, b types.Block, logger *zap.
 			zap.Uint8("consistency_level", observation.ConsistencyLevel),
 		)
 
-		e.msgChan <- observation
+		e.msgC <- observation
 	}
 }
 
