@@ -77,7 +77,7 @@ type (
 		chainID vaa.ChainID
 
 		// Channel to send new messages to.
-		msgC chan *common.MessagePublication
+		msgC chan<- *common.MessagePublication
 
 		// Channel to send guardian set changes to.
 		// setC can be set to nil if no guardian set changes are needed.
@@ -88,11 +88,11 @@ type (
 		// The current primary chain is Ethereum (a mostly arbitrary decision because it
 		// has the best API - we might want to switch the primary chain to Solana once
 		// the governance mechanism lives there),
-		setC chan *common.GuardianSet
+		setC chan<- *common.GuardianSet
 
 		// Incoming re-observation requests from the network. Pre-filtered to only
 		// include requests for our chainID.
-		obsvReqC chan *gossipv1.ObservationRequest
+		obsvReqC <-chan *gossipv1.ObservationRequest
 
 		pending   map[pendingKey]*pendingMessage
 		pendingMu sync.Mutex
@@ -141,9 +141,9 @@ func NewEthWatcher(
 	networkName string,
 	readiness readiness.Component,
 	chainID vaa.ChainID,
-	msgC chan *common.MessagePublication,
-	setC chan *common.GuardianSet,
-	obsvReqC chan *gossipv1.ObservationRequest,
+	msgC chan<- *common.MessagePublication,
+	setC chan<- *common.GuardianSet,
+	obsvReqC <-chan *gossipv1.ObservationRequest,
 	unsafeDevMode bool,
 ) *Watcher {
 
