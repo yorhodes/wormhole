@@ -34,11 +34,11 @@ type (
 		urlWS  string
 		urlLCD string
 
-		msgC chan *common.MessagePublication
+		msgC chan<- *common.MessagePublication
 
 		// Incoming re-observation requests from the network. Pre-filtered to only
 		// include requests for our chainID.
-		obsvReqC chan *gossipv1.ObservationRequest
+		obsvReqC <-chan *gossipv1.ObservationRequest
 	}
 )
 
@@ -75,8 +75,8 @@ type clientRequest struct {
 func NewWatcher(
 	urlWS string,
 	urlLCD string,
-	msgC chan *common.MessagePublication,
-	obsvReqC chan *gossipv1.ObservationRequest) *Watcher {
+	msgC chan<- *common.MessagePublication,
+	obsvReqC <-chan *gossipv1.ObservationRequest) *Watcher {
 	return &Watcher{urlWS: urlWS, urlLCD: urlLCD, msgC: msgC, obsvReqC: obsvReqC}
 }
 
