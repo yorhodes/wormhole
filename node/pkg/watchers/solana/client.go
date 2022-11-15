@@ -28,8 +28,8 @@ type SolanaWatcher struct {
 	contract   solana.PublicKey
 	rpcUrl     string
 	commitment rpc.CommitmentType
-	msgC       chan *common.MessagePublication
-	obsvReqC   chan *gossipv1.ObservationRequest
+	msgC       chan<- *common.MessagePublication
+	obsvReqC   <-chan *gossipv1.ObservationRequest
 	rpcClient  *rpc.Client
 	// Readiness component
 	readiness readiness.Component
@@ -117,8 +117,8 @@ type PostMessageData struct {
 func NewSolanaWatcher(
 	rpcUrl string,
 	contractAddress solana.PublicKey,
-	msgC chan *common.MessagePublication,
-	obsvReqC chan *gossipv1.ObservationRequest,
+	msgC chan<- *common.MessagePublication,
+	obsvReqC <-chan *gossipv1.ObservationRequest,
 	commitment rpc.CommitmentType,
 	readiness readiness.Component,
 	chainID vaa.ChainID) *SolanaWatcher {
