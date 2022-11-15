@@ -1269,7 +1269,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		p := processor.NewProcessor(ctx,
+		if err := supervisor.Run(ctx, "processor", processor.NewProcessor(ctx,
 			db,
 			readMsgC,
 			readSetC,
@@ -1287,8 +1287,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			attestationEvents,
 			notifier,
 			gov,
-		)
-		if err := supervisor.Run(ctx, "processor", p.Run); err != nil {
+		).Run); err != nil {
 			return err
 		}
 
