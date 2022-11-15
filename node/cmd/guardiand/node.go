@@ -857,9 +857,9 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Per-chain observation requests
 	chainObsvReqC := make(map[vaa.ChainID]chan *gossipv1.ObservationRequest)
 
-	// Per-chain lockC
+	// Per-chain msgC
 	chainMsgC := make(map[vaa.ChainID]chan *common.MessagePublication)
-	// aggregate per-chain lockC into lockC.
+	// aggregate per-chain msgC into msgC.
 	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmiggerChain to its chainId.
 	for chainId, _ := range sdk.KnownTokenbridgeEmitters { // TODO maybe not use KnownTokenbridgeEmitters here and think about adding just a list of chainIds to the sdk mainnet_consts.go
 		chainMsgC[chainId] = make(chan *common.MessagePublication)
