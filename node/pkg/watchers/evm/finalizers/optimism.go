@@ -39,6 +39,10 @@ func NewOptimismFinalizer(ctx context.Context, logger *zap.Logger, connector con
 }
 
 func (f *OptimismFinalizer) IsBlockFinalized(ctx context.Context, block *connectors.NewBlock) (bool, error) {
+	if block == nil {
+		return false, fmt.Errorf("block is nil")
+	}
+
 	finalizedL1Block := f.l1Finalizer.GetLatestFinalizedBlockNumber()
 	if finalizedL1Block == 0 {
 		// This happens on start up.
