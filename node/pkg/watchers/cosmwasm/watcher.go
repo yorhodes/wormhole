@@ -34,11 +34,11 @@ type (
 		urlLCD   string
 		contract string
 
-		msgC chan *common.MessagePublication
+		msgC chan<- *common.MessagePublication
 
 		// Incoming re-observation requests from the network. Pre-filtered to only
 		// include requests for our chainID.
-		obsvReqC chan *gossipv1.ObservationRequest
+		obsvReqC <-chan *gossipv1.ObservationRequest
 
 		// Readiness component
 		readiness readiness.Component
@@ -93,8 +93,8 @@ func NewWatcher(
 	urlWS string,
 	urlLCD string,
 	contract string,
-	msgC chan *common.MessagePublication,
-	obsvReqC chan *gossipv1.ObservationRequest,
+	msgC chan<- *common.MessagePublication,
+	obsvReqC <-chan *gossipv1.ObservationRequest,
 	readiness readiness.Component,
 	chainID vaa.ChainID) *Watcher {
 
