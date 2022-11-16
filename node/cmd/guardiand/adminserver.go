@@ -349,6 +349,7 @@ func adminServiceRunnable(
 	logger *zap.Logger,
 	socketPath string,
 	injectC chan<- *vaa.VAA,
+	signedInC chan<- *gossipv1.SignedVAAWithQuorum,
 	obsvReqSendC chan<- *gossipv1.ObservationRequest,
 	db *db.Database,
 	gst *common.GuardianSetState,
@@ -390,7 +391,7 @@ func adminServiceRunnable(
 		obsvReqSendC: obsvReqSendC,
 		db:           db,
 		logger:       logger.Named("adminservice"),
-		signedInC:    make(chan *gossipv1.SignedVAAWithQuorum, 50),
+		signedInC:    signedInC,
 		governor:     gov,
 	}
 

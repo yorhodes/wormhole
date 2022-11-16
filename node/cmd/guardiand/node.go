@@ -837,7 +837,13 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		// Ethereum incoming guardian set updates
 		setC := make(chan *common.GuardianSet)
+		setReadC = setC
 		setWriteC = setC
+
+		// Inbound signed VAAs
+		signedInC := make(chan *gossipv1.SignedVAAWithQuorum, 50)
+		signedInReadC = signedInC
+		signedInWriteC = signedInC
 
 		// Inbound observation requests from the p2p service (for all chains)
 		obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
@@ -1289,7 +1295,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			return err
 		}
 
-		adminService, err := adminServiceRunnable(logger, *adminSocketPath, injectWriteC, obsvReqSendWriteC, db, gst, gov)
+		adminService, err := adminServiceRunnable(logger, *adminSocketPath, injectWriteC, signedInWriteC, obsvReqSendWriteC, db, gst, gov)
 		if err != nil {
 			logger.Fatal("failed to create admin service socket", zap.Error(err))
 		}
