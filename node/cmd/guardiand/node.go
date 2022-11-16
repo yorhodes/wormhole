@@ -861,7 +861,7 @@ func runNode(cmd *cobra.Command, args []string) {
 		go func(c <-chan *common.MessagePublication) {
 			for msg := range c {
 				if msg.EmitterChain == chainId {
-					msgC <- msg
+					writeMsgC <- msg
 				} else {
 					// SECURITY: This should never happen. If it does, a watcher has been compromised.
 					logger.Error("SECURITY CRITICAL: Received observation from a chain that was not marked as originating from that chain",
@@ -1249,7 +1249,7 @@ func runNode(cmd *cobra.Command, args []string) {
 				}
 			}
 		}
-		go handleReobservationRequests(rootCtx, clock.New(), logger, obsvReqC, chainObsvReqC)
+		go handleReobservationRequests(rootCtx, clock.New(), logger, readObsvReqC, chainObsvReqC)
 
 		if gov != nil {
 			err := gov.Run(ctx)
@@ -1262,7 +1262,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			db,
 			readMsgC,
 			readSetC,
-			obsvC,
+			readObsvC,
 			writeObsvReqSendC,
 			readInjectC,
 			readSignedInC,
