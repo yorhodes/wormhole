@@ -8,10 +8,8 @@ import (
 	"net/http"
 	_ "net/http/pprof" // #nosec G108 we are using a custom router (`router := mux.NewRouter()`) and thus not automatically expose pprof.
 	"os"
-	"os/signal"
 	"path"
 	"strings"
-	"syscall"
 
 	"github.com/certusone/wormhole/node/pkg/watchers/wormchain"
 
@@ -804,47 +802,60 @@ func runNode(cmd *cobra.Command, args []string) {
 	rootCtx, rootCtxCancel = context.WithCancel(context.Background())
 	defer rootCtxCancel()
 
-	sigterm := make(chan os.Signal, 1)
-	signal.Notify(sigterm, syscall.SIGTERM)
-	go func() {
-		<-sigterm
-		logger.Info("Received sigterm. exiting.")
-		rootCtxCancel()
-	}()
+	// Setup various channels
+	var (
+		readMsgC  <-chan *common.MessagePublication
+		writeMsgC chan<- *common.MessagePublication
 
-	// Finalized guardian observations aggregated across all chains
-	msgC := make(chan *common.MessagePublication)
-	var readMsgC <-chan *common.MessagePublication = msgC
+		readSetC  <-chan *common.GuardianSet
+		writeSetC chan<- *common.GuardianSet
 
-	// Ethereum incoming guardian set updates
-	setC := make(chan *common.GuardianSet)
-	var readSetC <-chan *common.GuardianSet = setC
-	var writeSetC chan<- *common.GuardianSet = setC
+		readObsvC  <-chan *gossipv1.SignedObservation
+		writeObsvC chan<- *gossipv1.SignedObservation
 
-	// Inbound observations
-	obsvC := make(chan *gossipv1.SignedObservation, 50)
-	var readObsvC <-chan *gossipv1.SignedObservation = obsvC
-	var writeObsvC chan<- *gossipv1.SignedObservation = obsvC
+		readSignedInC  <-chan *gossipv1.SignedVAAWithQuorum
+		writeSignedInC chan<- *gossipv1.SignedVAAWithQuorum
 
-	// Inbound signed VAAs
-	signedInC := make(chan *gossipv1.SignedVAAWithQuorum, 50)
-	var readSignedInC <-chan *gossipv1.SignedVAAWithQuorum = signedInC
-	var writeSignedInC chan<- *gossipv1.SignedVAAWithQuorum = signedInC
+		readObsvReqC  <-chan *gossipv1.ObservationRequest
+		writeObsvReqC chan<- *gossipv1.ObservationRequest
 
-	// Inbound observation requests from the p2p service (for all chains)
-	obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-	var readObsvReqC <-chan *gossipv1.ObservationRequest = obsvReqC
-	var writeObsvReqC chan<- *gossipv1.ObservationRequest = obsvReqC
+		readObsvReqSendC  <-chan *gossipv1.ObservationRequest
+		writeObsvReqSendC chan<- *gossipv1.ObservationRequest
 
-	// Outbound observation requests
-	obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-	var readObsvReqSendC <-chan *gossipv1.ObservationRequest = obsvReqSendC
-	var writeObsvReqSendC chan<- *gossipv1.ObservationRequest = obsvReqSendC
+		readInjectC  <-chan *vaa.VAA
+		writeInjectC chan<- *vaa.VAA
+	)
 
-	// Injected VAAs (manually generated rather than created via observation)
-	injectC := make(chan *vaa.VAA)
-	var readInjectC <-chan *vaa.VAA = injectC
-	var writeInjectC chan<- *vaa.VAA = injectC
+	// channels are created in a block such that they can only be accessed through their explicit read/write aliases
+	{
+		// Finalized guardian observations aggregated across all chains
+		msgC := make(chan *common.MessagePublication)
+		readMsgC = msgC
+		writeMsgC = msgC
+
+		// Ethereum incoming guardian set updates
+		setC := make(chan *common.GuardianSet)
+		writeSetC = setC
+		// Inbound observations
+		obsvC := make(chan *gossipv1.SignedObservation, 50)
+		readObsvC = obsvC
+		writeObsvC = obsvC
+
+		// Inbound observation requests from the p2p service (for all chains)
+		obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
+		readObsvReqC = obsvReqC
+		writeObsvReqC = obsvReqC
+
+		// Outbound observation requests
+		obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
+		readObsvReqSendC = obsvReqSendC
+		writeObsvReqSendC = obsvReqSendC
+
+		// Injected VAAs (manually generated rather than created via observation)
+		injectC := make(chan *vaa.VAA)
+		readInjectC = injectC
+		writeInjectC = injectC
+	}
 
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
@@ -1279,7 +1290,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			return err
 		}
 
-		adminService, err := adminServiceRunnable(logger, *adminSocketPath, writeInjectC, signedInC, obsvReqSendC, db, gst, gov)
+		adminService, err := adminServiceRunnable(logger, *adminSocketPath, writeInjectC, writeObsvReqSendC, db, gst, gov)
 		if err != nil {
 			logger.Fatal("failed to create admin service socket", zap.Error(err))
 		}

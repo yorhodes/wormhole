@@ -34,9 +34,9 @@ type nodePrivilegedService struct {
 	nodev1.UnimplementedNodePrivilegedServiceServer
 	db           *db.Database
 	injectC      chan<- *vaa.VAA
-	obsvReqSendC chan *gossipv1.ObservationRequest
+	obsvReqSendC chan<- *gossipv1.ObservationRequest
 	logger       *zap.Logger
-	signedInC    chan *gossipv1.SignedVAAWithQuorum
+	signedInC    chan<- *gossipv1.SignedVAAWithQuorum
 	governor     *governor.ChainGovernor
 }
 
@@ -345,8 +345,15 @@ func (s *nodePrivilegedService) FindMissingMessages(ctx context.Context, req *no
 	}, nil
 }
 
-func adminServiceRunnable(logger *zap.Logger, socketPath string, injectC chan<- *vaa.VAA, signedInC chan *gossipv1.SignedVAAWithQuorum, obsvReqSendC chan *gossipv1.ObservationRequest,
-	db *db.Database, gst *common.GuardianSetState, gov *governor.ChainGovernor) (supervisor.Runnable, error) {
+func adminServiceRunnable(
+	logger *zap.Logger,
+	socketPath string,
+	injectC chan<- *vaa.VAA,
+	obsvReqSendC chan<- *gossipv1.ObservationRequest,
+	db *db.Database,
+	gst *common.GuardianSetState,
+	gov *governor.ChainGovernor,
+) (supervisor.Runnable, error) {
 	// Delete existing UNIX socket, if present.
 	fi, err := os.Stat(socketPath)
 	if err == nil {
@@ -383,7 +390,7 @@ func adminServiceRunnable(logger *zap.Logger, socketPath string, injectC chan<- 
 		obsvReqSendC: obsvReqSendC,
 		db:           db,
 		logger:       logger.Named("adminservice"),
-		signedInC:    signedInC,
+		signedInC:    make(chan *gossipv1.SignedVAAWithQuorum, 50),
 		governor:     gov,
 	}
 
