@@ -87,7 +87,7 @@ type Processor struct {
 	// gossipSendC is a channel of outbound messages to broadcast on p2p
 	gossipSendC chan<- []byte
 	// obsvC is a channel of inbound decoded observations from p2p
-	obsvC <-chan *gossipv1.SignedObservation
+	obsvC chan *gossipv1.SignedObservation
 
 	// obsvReqSendC is a send-only channel of outbound re-observation requests to broadcast on p2p
 	obsvReqSendC chan<- *gossipv1.ObservationRequest
@@ -140,7 +140,7 @@ func NewProcessor(
 	msgC <-chan *common.MessagePublication,
 	setC <-chan *common.GuardianSet,
 	gossipSendC chan<- []byte,
-	obsvC <-chan *gossipv1.SignedObservation,
+	obsvC chan *gossipv1.SignedObservation,
 	obsvReqSendC chan<- *gossipv1.ObservationRequest,
 	injectC <-chan *vaa.VAA,
 	signedInC <-chan *gossipv1.SignedVAAWithQuorum,

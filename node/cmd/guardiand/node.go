@@ -810,9 +810,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		setReadC  <-chan *common.GuardianSet
 		setWriteC chan<- *common.GuardianSet
 
-		obsvReadC  <-chan *gossipv1.SignedObservation
-		obsvWriteC chan<- *gossipv1.SignedObservation
-
 		signedInReadC  <-chan *gossipv1.SignedVAAWithQuorum
 		signedInWriteC chan<- *gossipv1.SignedVAAWithQuorum
 
@@ -826,7 +823,12 @@ func runNode(cmd *cobra.Command, args []string) {
 		injectWriteC chan<- *vaa.VAA
 	)
 
-	// channels are created in a block such that they can only be accessed through their explicit read/write aliases
+	// Outbound gossip message queue (needs to be read/write because p2p needs read/write)
+	gossipSendC := make(chan []byte)
+	// Inbound observations
+	obsvC := make(chan *gossipv1.SignedObservation, 50)
+
+	// the following channels are created in a block such that they can only be accessed through their explicit read/write aliases
 	{
 		// Finalized guardian observations aggregated across all chains
 		msgC := make(chan *common.MessagePublication)
@@ -836,10 +838,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		// Ethereum incoming guardian set updates
 		setC := make(chan *common.GuardianSet)
 		setWriteC = setC
-		// Inbound observations
-		obsvC := make(chan *gossipv1.SignedObservation, 50)
-		obsvReadC = obsvC
-		obsvWriteC = obsvC
 
 		// Inbound observation requests from the p2p service (for all chains)
 		obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
@@ -856,8 +854,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		injectReadC = injectC
 		injectWriteC = injectC
 	}
-	// Outbound gossip message queue (needs to be read/write because p2p needs read/write)
-	gossipSendC := make(chan []byte)
 
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
@@ -971,7 +967,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Run supervisor.
 	supervisor.New(rootCtx, logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "p2p", p2p.Run(
-			obsvWriteC, obsvReqWriteC, obsvReqSendReadC, gossipSendC, signedInWriteC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
+			(chan<- *gossipv1.SignedObservation)(obsvC), obsvReqWriteC, obsvReqSendReadC, gossipSendC, signedInWriteC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
 			return err
 		}
 
@@ -1276,7 +1272,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			msgReadC,
 			setReadC,
 			gossipSendC,
-			obsvReadC,
+			obsvC,
 			obsvReqSendWriteC,
 			injectReadC,
 			signedInReadC,
