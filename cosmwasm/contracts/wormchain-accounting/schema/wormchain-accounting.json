@@ -64,6 +64,7 @@
     "title": "ExecuteMsg",
     "oneOf": [
       {
+        "description": "Submit a series of observations.  Once the contract has received a quorum of signatures for a particular observation, the transfer associated with the observation will be committed to the on-chain state.",
         "type": "object",
         "required": [
           "submit_observations"
@@ -95,6 +96,7 @@
         "additionalProperties": false
       },
       {
+        "description": "Modifies the balance of a single account.  Used to manually override the balance.",
         "type": "object",
         "required": [
           "modify_balance"
@@ -155,6 +157,48 @@
               },
               "upgrade": {
                 "$ref": "#/definitions/Binary"
+              }
+            },
+            "additionalProperties": false
+          }
+        },
+        "additionalProperties": false
+      },
+      {
+        "description": "Commits a sequence of transfers to the on-chain state.  If committing any of the transfers returns an error, then the entire transaction is aborted and none of the transfers are committed.",
+        "type": "object",
+        "required": [
+          "commit_transfers"
+        ],
+        "properties": {
+          "commit_transfers": {
+            "type": "object",
+            "required": [
+              "guardian_set_index",
+              "signatures",
+              "transfers"
+            ],
+            "properties": {
+              "guardian_set_index": {
+                "description": "The index of the guardian set used to sign `transfers`.",
+                "type": "integer",
+                "format": "uint32",
+                "minimum": 0.0
+              },
+              "signatures": {
+                "description": "A quorum of signatures for `transfers`.",
+                "type": "array",
+                "items": {
+                  "$ref": "#/definitions/Signature"
+                }
+              },
+              "transfers": {
+                "description": "A serialized `Vec<accounting::state::Transfer>`.  Multiple transfers can be committed together to reduce transaction overhead.",
+                "allOf": [
+                  {
+                    "$ref": "#/definitions/Binary"
+                  }
+                ]
               }
             },
             "additionalProperties": false

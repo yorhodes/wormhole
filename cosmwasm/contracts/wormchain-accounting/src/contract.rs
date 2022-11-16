@@ -103,6 +103,11 @@ pub fn execute(
             guardian_set_index,
             signatures,
         } => upgrade_contract(deps, env, info, upgrade, guardian_set_index, signatures),
+        ExecuteMsg::CommitTransfers {
+            transfers,
+            guardian_set_index,
+            signatures,
+        } => commit_transfers(deps, info, transfers, guardian_set_index, signatures),
     }
 }
 
@@ -334,6 +339,37 @@ fn upgrade_contract(
         }))
         .add_attribute("action", "contract_upgrade")
         .add_attribute("owner", info.sender))
+}
+
+fn commit_transfers(
+    mut deps: DepsMut<WormholeQuery>,
+    info: MessageInfo,
+    transfers: Binary,
+    guardian_set_index: u32,
+    signatures: Vec<Signature>,
+) -> Result<Response, AnyError> {
+    deps.querier
+        .query::<Empty>(
+            &WormholeQuery::VerifyQuorum {
+                data: transfers.clone(),
+                guardian_set_index,
+                signatures,
+            }
+            .into(),
+        )
+        .context("failed to verify quorum")?;
+
+    let txs: Vec<Transfer> = from_binary(&transfers).context("failed to parse `transfers`")?;
+
+    let num_transfers = txs.len();
+    for t in txs {
+        accounting::commit_transfer(deps.branch(), t).context("failed to commit transfer")?;
+    }
+
+    Ok(Response::new()
+        .add_attribute("action", "commit_transfers")
+        .add_attribute("owner", info.sender)
+        .add_attribute("num_transfers", num_transfers.to_string()))
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]

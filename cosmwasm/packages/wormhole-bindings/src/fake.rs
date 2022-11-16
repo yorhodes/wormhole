@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::BTreeSet, fmt::Debug, rc::Rc};
 
-use anyhow::{anyhow, bail, ensure};
+use anyhow::{anyhow, bail, ensure, Context};
 use cosmwasm_std::{to_binary, Addr, Api, Binary, BlockInfo, CustomQuery, Empty, Querier, Storage};
 use cw_multi_test::{AppResponse, CosmosRouter, Module};
 use k256::ecdsa::{
@@ -127,7 +127,7 @@ impl WormholeKeeper {
             g.verifying_key()
                 .verify(data, &s)
                 .map(|()| Empty {})
-                .map_err(From::from)
+                .context("failed to verify signature")
         } else {
             Err(anyhow!("invalid guardian index"))
         }

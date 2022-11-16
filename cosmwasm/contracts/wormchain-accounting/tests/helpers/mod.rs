@@ -91,6 +91,24 @@ impl Contract {
         )
     }
 
+    pub fn commit_transfers(
+        &mut self,
+        transfers: Binary,
+        guardian_set_index: u32,
+        signatures: Vec<wormhole_bindings::Signature>,
+    ) -> anyhow::Result<AppResponse> {
+        self.app.execute_contract(
+            Addr::unchecked(ADMIN),
+            self.addr(),
+            &ExecuteMsg::CommitTransfers {
+                transfers,
+                guardian_set_index,
+                signatures,
+            },
+            &[],
+        )
+    }
+
     pub fn query_balance(&self, key: account::Key) -> StdResult<account::Balance> {
         self.app
             .wrap()
