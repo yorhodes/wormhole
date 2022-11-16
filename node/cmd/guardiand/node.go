@@ -870,16 +870,19 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Per-chain msgC
 	chainMsgC := make(map[vaa.ChainID]chan *common.MessagePublication)
 	// aggregate per-chain msgC into msgC.
-	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmiggerChain to its chainId.
+	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmitterChain to its chainId.
 	for chainId := range sdk.KnownTokenbridgeEmitters { // TODO maybe not use KnownTokenbridgeEmitters here and think about adding just a list of chainIds to the sdk mainnet_consts.go
 		chainMsgC[chainId] = make(chan *common.MessagePublication)
 		go func(c <-chan *common.MessagePublication, chainId vaa.ChainID) {
-			for msg := range c {
+			select {
+			case <-rootCtx.Done():
+				return
+			case msg := <-c:
 				if msg.EmitterChain == chainId {
 					msgWriteC <- msg
 				} else {
 					// SECURITY: This should never happen. If it does, a watcher has been compromised.
-					logger.Error("SECURITY CRITICAL: Received observation from a chain that was not marked as originating from that chain",
+					logger.Fatal("SECURITY CRITICAL: Received observation from a chain that was not marked as originating from that chain",
 						zap.Stringer("tx", msg.TxHash),
 						zap.Stringer("emitter_address", msg.EmitterAddress),
 						zap.Uint64("sequence", msg.Sequence),
