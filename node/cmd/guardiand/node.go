@@ -955,12 +955,6 @@ func runNode(cmd *cobra.Command, args []string) {
 		logger.Info("chain governor is disabled")
 	}
 
-	// local admin service socket
-	adminService, err := adminServiceRunnable(logger, *adminSocketPath, injectC, signedInC, obsvReqSendC, db, gst, gov)
-	if err != nil {
-		logger.Fatal("failed to create admin service socket", zap.Error(err))
-	}
-
 	// Run supervisor.
 	supervisor.New(rootCtx, logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "p2p", p2p.Run(
@@ -1283,6 +1277,22 @@ func runNode(cmd *cobra.Command, args []string) {
 			gov,
 		).Run); err != nil {
 			return err
+		}
+
+		adminService, err := adminServiceRunnable(logger, *adminSocketPath, writeInjectC, signedInC, obsvReqSendC, db, gst, gov)
+		if err != nil {
+			logger.Fatal("failed to create admin service socket", zap.Error(err))
+		}
+
+		publicrpcService, publicrpcServer, err := publicrpcServiceRunnable(logger, *publicRPC, db, gst, gov)
+		if err != nil {
+			log.Fatal("failed to create publicrpc service socket", zap.Error(err))
+		}
+
+		publicwebService, err := publicwebServiceRunnable(logger, *publicWeb, *adminSocketPath, publicrpcServer,
+			*tlsHostname, *tlsProdEnv, path.Join(*dataDir, "autocert"))
+		if err != nil {
+			log.Fatal("failed to create publicrpc service socket", zap.Error(err))
 		}
 
 		if err := supervisor.Run(ctx, "admin", adminService); err != nil {
