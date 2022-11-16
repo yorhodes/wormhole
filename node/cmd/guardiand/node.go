@@ -802,64 +802,30 @@ func runNode(cmd *cobra.Command, args []string) {
 	rootCtx, rootCtxCancel = context.WithCancel(context.Background())
 	defer rootCtxCancel()
 
-	// Setup various channels
-	var (
-		msgReadC  <-chan *common.MessagePublication
-		msgWriteC chan<- *common.MessagePublication
-
-		setReadC  <-chan *common.GuardianSet
-		setWriteC chan<- *common.GuardianSet
-
-		signedInReadC  <-chan *gossipv1.SignedVAAWithQuorum
-		signedInWriteC chan<- *gossipv1.SignedVAAWithQuorum
-
-		obsvReqReadC  <-chan *gossipv1.ObservationRequest
-		obsvReqWriteC chan<- *gossipv1.ObservationRequest
-
-		obsvReqSendReadC  <-chan *gossipv1.ObservationRequest
-		obsvReqSendWriteC chan<- *gossipv1.ObservationRequest
-
-		injectReadC  <-chan *vaa.VAA
-		injectWriteC chan<- *vaa.VAA
-	)
+	// Setup various channels...
 
 	// Outbound gossip message queue (needs to be read/write because p2p needs read/write)
 	gossipSendC := make(chan []byte)
 	// Inbound observations
 	obsvC := make(chan *gossipv1.SignedObservation, 50)
 
-	// the following channels are created in a block such that they can only be accessed through their explicit read/write aliases
-	{
-		// Finalized guardian observations aggregated across all chains
-		msgC := make(chan *common.MessagePublication)
-		msgReadC = msgC
-		msgWriteC = msgC
+	// Finalized guardian observations aggregated across all chains
+	msgReadC, msgWriteC := makeChannelPair[*common.MessagePublication](0)
 
-		// Ethereum incoming guardian set updates
-		setC := make(chan *common.GuardianSet)
-		setReadC = setC
-		setWriteC = setC
+	// Ethereum incoming guardian set updates
+	setReadC, setWriteC := makeChannelPair[*common.GuardianSet](0)
 
-		// Inbound signed VAAs
-		signedInC := make(chan *gossipv1.SignedVAAWithQuorum, 50)
-		signedInReadC = signedInC
-		signedInWriteC = signedInC
+	// Inbound signed VAAs
+	signedInReadC, signedInWriteC := makeChannelPair[*gossipv1.SignedVAAWithQuorum](50)
 
-		// Inbound observation requests from the p2p service (for all chains)
-		obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-		obsvReqReadC = obsvReqC
-		obsvReqWriteC = obsvReqC
+	// Inbound observation requests from the p2p service (for all chains)
+	obsvReqReadC, obsvReqWriteC := makeChannelPair[*gossipv1.ObservationRequest](common.ObsvReqChannelSize)
 
-		// Outbound observation requests
-		obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-		obsvReqSendReadC = obsvReqSendC
-		obsvReqSendWriteC = obsvReqSendC
+	// Outbound observation requests
+	obsvReqSendReadC, obsvReqSendWriteC := makeChannelPair[*gossipv1.ObservationRequest](common.ObsvReqChannelSize)
 
-		// Injected VAAs (manually generated rather than created via observation)
-		injectC := make(chan *vaa.VAA)
-		injectReadC = injectC
-		injectWriteC = injectC
-	}
+	// Injected VAAs (manually generated rather than created via observation)
+	injectReadC, injectWriteC := makeChannelPair[*vaa.VAA](0)
 
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
@@ -1410,4 +1376,9 @@ func unsafeDevModeEvmContractAddress(contractAddr string) string {
 	}
 
 	return devnet.GanacheWormholeContractAddress.Hex()
+}
+
+func makeChannelPair[T any](cap int) (<-chan T, chan<- T) {
+	out := make(chan T, cap)
+	return out, out
 }
