@@ -68,10 +68,10 @@ func signedObservationRequestDigest(b []byte) common.Hash {
 }
 
 func Run(
-	obsvC chan *gossipv1.SignedObservation,
-	obsvReqC chan *gossipv1.ObservationRequest,
-	obsvReqSendC chan *gossipv1.ObservationRequest,
-	signedInC chan *gossipv1.SignedVAAWithQuorum,
+	obsvC chan<- *gossipv1.SignedObservation,
+	obsvReqC chan<- *gossipv1.ObservationRequest,
+	obsvReqSendC <-chan *gossipv1.ObservationRequest,
+	signedInC chan<- *gossipv1.SignedVAAWithQuorum,
 	priv crypto.PrivKey,
 	gk *ecdsa.PrivateKey,
 	gst *node_common.GuardianSetState,
