@@ -167,6 +167,8 @@ func NewMockFinalizer(initialState bool) *MockFinalizer {
 }
 
 func (f *MockFinalizer) SetFinalized(finalized bool) {
+	f.mutex.Lock()
+	defer f.mutex.Unlock()
 	f.finalized = finalized
 }
 
