@@ -856,6 +856,8 @@ func runNode(cmd *cobra.Command, args []string) {
 		injectReadC = injectC
 		injectWriteC = injectC
 	}
+	// Outbound gossip message queue (needs to be read/write because p2p needs read/write)
+	gossipSendC := make(chan []byte)
 
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
@@ -969,7 +971,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Run supervisor.
 	supervisor.New(rootCtx, logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "p2p", p2p.Run(
-			obsvWriteC, obsvReqWriteC, obsvReqSendReadC, signedInWriteC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
+			obsvWriteC, obsvReqWriteC, obsvReqSendReadC, gossipSendC, signedInWriteC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
 			return err
 		}
 
@@ -1273,6 +1275,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			db,
 			msgReadC,
 			setReadC,
+			gossipSendC,
 			obsvReadC,
 			obsvReqSendWriteC,
 			injectReadC,

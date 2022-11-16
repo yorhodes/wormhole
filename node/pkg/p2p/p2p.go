@@ -71,6 +71,7 @@ func Run(
 	obsvC chan<- *gossipv1.SignedObservation,
 	obsvReqC chan<- *gossipv1.ObservationRequest,
 	obsvReqSendC <-chan *gossipv1.ObservationRequest,
+	gossipSendC chan []byte,
 	signedInC chan<- *gossipv1.SignedVAAWithQuorum,
 	priv crypto.PrivKey,
 	gk *ecdsa.PrivateKey,
@@ -96,8 +97,6 @@ func Run(
 		if err != nil {
 			return fmt.Errorf("failed to create p2p connection manager: %w", err)
 		}
-
-		sendC := make(chan []byte)
 
 		h, err := libp2p.New(
 			// Use the keypair we generated
@@ -248,7 +247,7 @@ func Run(
 					collectNodeMetrics(ourAddr, h.ID(), heartbeat)
 
 					if gov != nil {
-						gov.CollectMetrics(heartbeat, sendC, gk, ourAddr)
+						gov.CollectMetrics(heartbeat, gossipSendC, gk, ourAddr)
 					}
 
 					b, err := proto.Marshal(heartbeat)
@@ -293,7 +292,7 @@ func Run(
 				select {
 				case <-ctx.Done():
 					return
-				case msg := <-sendC:
+				case msg := <-gossipSendC:
 					err := th.Publish(ctx, msg)
 					p2pMessagesSent.Inc()
 					if err != nil {
