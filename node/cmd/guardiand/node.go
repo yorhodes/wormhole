@@ -804,57 +804,57 @@ func runNode(cmd *cobra.Command, args []string) {
 
 	// Setup various channels
 	var (
-		readMsgC  <-chan *common.MessagePublication
-		writeMsgC chan<- *common.MessagePublication
+		msgReadC  <-chan *common.MessagePublication
+		msgWriteC chan<- *common.MessagePublication
 
-		readSetC  <-chan *common.GuardianSet
-		writeSetC chan<- *common.GuardianSet
+		setReadC  <-chan *common.GuardianSet
+		setWriteC chan<- *common.GuardianSet
 
-		readObsvC  <-chan *gossipv1.SignedObservation
-		writeObsvC chan<- *gossipv1.SignedObservation
+		obsvReadC  <-chan *gossipv1.SignedObservation
+		obsvWriteC chan<- *gossipv1.SignedObservation
 
-		readSignedInC  <-chan *gossipv1.SignedVAAWithQuorum
-		writeSignedInC chan<- *gossipv1.SignedVAAWithQuorum
+		signedInReadC  <-chan *gossipv1.SignedVAAWithQuorum
+		signedInWriteC chan<- *gossipv1.SignedVAAWithQuorum
 
-		readObsvReqC  <-chan *gossipv1.ObservationRequest
-		writeObsvReqC chan<- *gossipv1.ObservationRequest
+		obsvReqReadC  <-chan *gossipv1.ObservationRequest
+		obsvReqWriteC chan<- *gossipv1.ObservationRequest
 
-		readObsvReqSendC  <-chan *gossipv1.ObservationRequest
-		writeObsvReqSendC chan<- *gossipv1.ObservationRequest
+		obsvReqSendReadC  <-chan *gossipv1.ObservationRequest
+		obsvReqSendWriteC chan<- *gossipv1.ObservationRequest
 
-		readInjectC  <-chan *vaa.VAA
-		writeInjectC chan<- *vaa.VAA
+		injectReadC  <-chan *vaa.VAA
+		injectWriteC chan<- *vaa.VAA
 	)
 
 	// channels are created in a block such that they can only be accessed through their explicit read/write aliases
 	{
 		// Finalized guardian observations aggregated across all chains
 		msgC := make(chan *common.MessagePublication)
-		readMsgC = msgC
-		writeMsgC = msgC
+		msgReadC = msgC
+		msgWriteC = msgC
 
 		// Ethereum incoming guardian set updates
 		setC := make(chan *common.GuardianSet)
-		writeSetC = setC
+		setWriteC = setC
 		// Inbound observations
 		obsvC := make(chan *gossipv1.SignedObservation, 50)
-		readObsvC = obsvC
-		writeObsvC = obsvC
+		obsvReadC = obsvC
+		obsvWriteC = obsvC
 
 		// Inbound observation requests from the p2p service (for all chains)
 		obsvReqC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-		readObsvReqC = obsvReqC
-		writeObsvReqC = obsvReqC
+		obsvReqReadC = obsvReqC
+		obsvReqWriteC = obsvReqC
 
 		// Outbound observation requests
 		obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
-		readObsvReqSendC = obsvReqSendC
-		writeObsvReqSendC = obsvReqSendC
+		obsvReqSendReadC = obsvReqSendC
+		obsvReqSendWriteC = obsvReqSendC
 
 		// Injected VAAs (manually generated rather than created via observation)
 		injectC := make(chan *vaa.VAA)
-		readInjectC = injectC
-		writeInjectC = injectC
+		injectReadC = injectC
+		injectWriteC = injectC
 	}
 
 	// Guardian set state managed by processor
@@ -867,12 +867,12 @@ func runNode(cmd *cobra.Command, args []string) {
 	chainMsgC := make(map[vaa.ChainID]chan *common.MessagePublication)
 	// aggregate per-chain msgC into msgC.
 	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmiggerChain to its chainId.
-	for chainId, _ := range sdk.KnownTokenbridgeEmitters { // TODO maybe not use KnownTokenbridgeEmitters here and think about adding just a list of chainIds to the sdk mainnet_consts.go
+	for chainId := range sdk.KnownTokenbridgeEmitters { // TODO maybe not use KnownTokenbridgeEmitters here and think about adding just a list of chainIds to the sdk mainnet_consts.go
 		chainMsgC[chainId] = make(chan *common.MessagePublication)
-		go func(c <-chan *common.MessagePublication) {
+		go func(c <-chan *common.MessagePublication, chainId vaa.ChainID) {
 			for msg := range c {
 				if msg.EmitterChain == chainId {
-					writeMsgC <- msg
+					msgWriteC <- msg
 				} else {
 					// SECURITY: This should never happen. If it does, a watcher has been compromised.
 					logger.Error("SECURITY CRITICAL: Received observation from a chain that was not marked as originating from that chain",
@@ -884,7 +884,7 @@ func runNode(cmd *cobra.Command, args []string) {
 					)
 				}
 			}
-		}(chainMsgC[chainId])
+		}(chainMsgC[chainId], chainId)
 	}
 
 	var notifier *discord.DiscordNotifier
@@ -969,7 +969,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Run supervisor.
 	supervisor.New(rootCtx, logger, func(ctx context.Context) error {
 		if err := supervisor.Run(ctx, "p2p", p2p.Run(
-			writeObsvC, writeObsvReqC, readObsvReqSendC, writeSignedInC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
+			obsvWriteC, obsvReqWriteC, obsvReqSendReadC, signedInWriteC, priv, gk, gst, *p2pPort, *p2pNetworkID, *p2pBootstrap, *nodeName, *disableHeartbeatVerify, rootCtxCancel, gov, nil, nil)); err != nil {
 			return err
 		}
 
@@ -985,7 +985,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			logger.Info("Starting Ethereum watcher")
 			readiness.RegisterComponent(common.ReadinessEthSyncing)
 			chainObsvReqC[vaa.ChainIDEthereum] = make(chan *gossipv1.ObservationRequest, observationRequestBufferSize)
-			ethWatcher = evm.NewEthWatcher(*ethRPC, ethContractAddr, "eth", common.ReadinessEthSyncing, vaa.ChainIDEthereum, chainMsgC[vaa.ChainIDEthereum], writeSetC, chainObsvReqC[vaa.ChainIDEthereum], *unsafeDevMode)
+			ethWatcher = evm.NewEthWatcher(*ethRPC, ethContractAddr, "eth", common.ReadinessEthSyncing, vaa.ChainIDEthereum, chainMsgC[vaa.ChainIDEthereum], setWriteC, chainObsvReqC[vaa.ChainIDEthereum], *unsafeDevMode)
 			if err := supervisor.Run(ctx, "ethwatch",
 				ethWatcher.Run); err != nil {
 				return err
@@ -1260,7 +1260,7 @@ func runNode(cmd *cobra.Command, args []string) {
 				}
 			}
 		}
-		go handleReobservationRequests(rootCtx, clock.New(), logger, readObsvReqC, chainObsvReqC)
+		go handleReobservationRequests(rootCtx, clock.New(), logger, obsvReqReadC, chainObsvReqC)
 
 		if gov != nil {
 			err := gov.Run(ctx)
@@ -1271,12 +1271,12 @@ func runNode(cmd *cobra.Command, args []string) {
 
 		if err := supervisor.Run(ctx, "processor", processor.NewProcessor(ctx,
 			db,
-			readMsgC,
-			readSetC,
-			readObsvC,
-			writeObsvReqSendC,
-			readInjectC,
-			readSignedInC,
+			msgReadC,
+			setReadC,
+			obsvReadC,
+			obsvReqSendWriteC,
+			injectReadC,
+			signedInReadC,
 			gk,
 			gst,
 			*unsafeDevMode,
@@ -1290,7 +1290,7 @@ func runNode(cmd *cobra.Command, args []string) {
 			return err
 		}
 
-		adminService, err := adminServiceRunnable(logger, *adminSocketPath, writeInjectC, writeObsvReqSendC, db, gst, gov)
+		adminService, err := adminServiceRunnable(logger, *adminSocketPath, injectWriteC, obsvReqSendWriteC, db, gst, gov)
 		if err != nil {
 			logger.Fatal("failed to create admin service socket", zap.Error(err))
 		}
