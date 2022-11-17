@@ -3,218 +3,129 @@ package processor
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/hex"
 	"fmt"
 	"time"
 
-	"github.com/certusone/wormhole/node/pkg/notify/discord"
-
+	"github.com/certusone/wormhole/node/pkg/common"
 	"github.com/certusone/wormhole/node/pkg/db"
 	"github.com/certusone/wormhole/node/pkg/governor"
-
-	ethcommon "github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/crypto"
-	"go.uber.org/zap"
-
-	"github.com/certusone/wormhole/node/pkg/common"
+	"github.com/certusone/wormhole/node/pkg/processor/reactor"
 	gossipv1 "github.com/certusone/wormhole/node/pkg/proto/gossip/v1"
 	"github.com/certusone/wormhole/node/pkg/reporter"
 	"github.com/certusone/wormhole/node/pkg/supervisor"
 	"github.com/wormhole-foundation/wormhole/sdk/vaa"
+	"go.uber.org/zap"
+	"google.golang.org/protobuf/proto"
 )
 
-type (
-	// Observation defines the interface for any events observed by the guardian.
-	Observation interface {
-		// GetEmitterChain returns the id of the chain where this event was observed.
-		GetEmitterChain() vaa.ChainID
-		// MessageID returns a human-readable emitter_chain/emitter_address/sequence tuple.
-		MessageID() string
-		// SigningMsg returns the hash of the signing body of the observation. This is used
-		// for signature generation and verification.
-		SigningMsg() ethcommon.Hash
-		// IsReliable returns whether this message is considered reliable meaning it can be reobserved.
-		IsReliable() bool
-		// HandleQuorum finishes processing the observation once a quorum of signatures have
-		// been received for it.
-		HandleQuorum(sigs []*vaa.Signature, hash string, p *Processor)
-	}
-
-	// state represents the local view of a given observation
-	state struct {
-		// First time this digest was seen (possibly even before we observed it ourselves).
-		firstObserved time.Time
-		// The most recent time that a re-observation request was sent to the guardian network.
-		lastRetry time.Time
-		// Copy of our observation.
-		ourObservation Observation
-		// Map of signatures seen by guardian. During guardian set updates, this may contain signatures belonging
-		// to either the old or new guardian set.
-		signatures map[ethcommon.Address][]byte
-		// Flag set after reaching quorum and submitting the VAA.
-		submitted bool
-		// Flag set by the cleanup service after the settlement timeout has expired and misses were counted.
-		settled bool
-		// Human-readable description of the VAA's source, used for metrics.
-		source string
-		// Number of times the cleanup service has attempted to retransmit this VAA.
-		retryCount uint
-		// Copy of the bytes we submitted (ourObservation, but signed and serialized). Used for retransmissions.
-		ourMsg []byte
-		// The hash of the transaction in which the observation was made.  Used for re-observation requests.
-		txHash []byte
-		// Copy of the guardian set valid at observation/injection time.
-		gs *common.GuardianSet
-	}
-
-	observationMap map[string]*state
-
-	// aggregationState represents the node's aggregation of guardian signatures.
-	aggregationState struct {
-		signatures observationMap
-	}
-)
-
-type PythNetVaaEntry struct {
-	v          *vaa.VAA
-	updateTime time.Time // Used for determining when to delete entries
-}
-
-type Processor struct {
+type VAAReactor struct {
 	// lockC is a channel of observed emitted messages
 	lockC chan *common.MessagePublication
-	// setC is a channel of guardian set updates
-	setC chan *common.GuardianSet
-
-	// sendC is a channel of outbound messages to broadcast on p2p
-	sendC chan []byte
-	// obsvC is a channel of inbound decoded observations from p2p
-	obsvC chan *gossipv1.SignedObservation
-
+	// obsC is a channel of VAAs used to forward to the reactor manager
+	obsC chan *vaa.VAA
 	// obsvReqSendC is a send-only channel of outbound re-observation requests to broadcast on p2p
 	obsvReqSendC chan<- *gossipv1.ObservationRequest
-
 	// signedInC is a channel of inbound signed VAA observations from p2p
 	signedInC chan *gossipv1.SignedVAAWithQuorum
-
-	// injectC is a channel of VAAs injected locally.
-	injectC chan *vaa.VAA
-
-	// gk is the node's guardian private key
-	gk *ecdsa.PrivateKey
-
-	// devnetMode specified whether to submit transactions to the hardcoded Ethereum devnet
-	devnetMode         bool
-	devnetNumGuardians uint
-	devnetEthRPC       string
-
-	wormchainLCD string
+	// sendC is a channel of outbound messages to broadcast on p2p
+	sendC chan []byte
 
 	attestationEvents *reporter.AttestationEventReporter
+	logger            *zap.Logger
+	db                *db.Database
 
-	logger *zap.Logger
+	manager *reactor.Manager[*vaa.VAA]
 
-	db *db.Database
-
-	// Runtime state
-
-	// gs is the currently valid guardian set
-	gs *common.GuardianSet
 	// gst is managed by the processor and allows concurrent access to the
 	// guardian set by other components.
 	gst *common.GuardianSetState
 
-	// state is the current runtime VAA view
-	state *aggregationState
-	// gk pk as eth address
-	ourAddr ethcommon.Address
-	// cleanup triggers periodic state cleanup
-	cleanup *time.Ticker
-
-	notifier    *discord.DiscordNotifier
 	governor    *governor.ChainGovernor
 	pythnetVaas map[string]PythNetVaaEntry
 }
 
-func NewProcessor(
-	ctx context.Context,
+func NewVAAReactor(
 	db *db.Database,
 	lockC chan *common.MessagePublication,
 	setC chan *common.GuardianSet,
 	sendC chan []byte,
 	obsvC chan *gossipv1.SignedObservation,
 	obsvReqSendC chan<- *gossipv1.ObservationRequest,
-	injectC chan *vaa.VAA,
 	signedInC chan *gossipv1.SignedVAAWithQuorum,
 	gk *ecdsa.PrivateKey,
 	gst *common.GuardianSetState,
-	devnetMode bool,
-	devnetNumGuardians uint,
-	devnetEthRPC string,
-	wormchainLCD string,
 	attestationEvents *reporter.AttestationEventReporter,
-	notifier *discord.DiscordNotifier,
 	g *governor.ChainGovernor,
-) *Processor {
+) *VAAReactor {
+	obsC := make(chan *vaa.VAA, 10)
 
-	return &Processor{
-		lockC:              lockC,
-		setC:               setC,
-		sendC:              sendC,
-		obsvC:              obsvC,
-		obsvReqSendC:       obsvReqSendC,
-		signedInC:          signedInC,
-		injectC:            injectC,
-		gk:                 gk,
-		gst:                gst,
-		devnetMode:         devnetMode,
-		devnetNumGuardians: devnetNumGuardians,
-		devnetEthRPC:       devnetEthRPC,
-		db:                 db,
-
-		wormchainLCD: wormchainLCD,
-
+	r := &VAAReactor{
+		obsvReqSendC:      obsvReqSendC,
+		signedInC:         signedInC,
+		lockC:             lockC,
+		obsC:              obsC,
+		sendC:             sendC,
+		gst:               gst,
+		db:                db,
 		attestationEvents: attestationEvents,
-
-		notifier: notifier,
-
-		logger:      supervisor.Logger(ctx),
-		state:       &aggregationState{observationMap{}},
-		ourAddr:     crypto.PubkeyToAddress(gk.PublicKey),
-		governor:    g,
-		pythnetVaas: make(map[string]PythNetVaaEntry),
+		governor:          g,
 	}
+
+	manager := reactor.NewManager[*vaa.VAA](obsC, obsvC, setC, gst, reactor.Config{
+		RetransmitFrequency: 30 * time.Second,
+		QuorumGracePeriod:   30 * time.Second,
+		QuorumTimeout:       5 * time.Minute,
+		UnobservedTimeout:   5 * time.Minute,
+		Signer:              reactor.NewEcdsaKeySigner(gk),
+		NetworkAdapter:      reactor.NewChannelNetworkAdapter(sendC),
+	}, r)
+	r.manager = manager
+
+	return r
 }
 
-func (p *Processor) Run(ctx context.Context) error {
-	p.cleanup = time.NewTicker(30 * time.Second)
+func (p *VAAReactor) Run(ctx context.Context) error {
+	p.logger = supervisor.Logger(ctx)
+
+	err := supervisor.Run(ctx, "vaa-reactor-manager", p.manager.Run)
+	if err != nil {
+		return fmt.Errorf("failed to start reactor manager: %w", err)
+	}
+
+	cleanup := time.NewTicker(30 * time.Second)
+	defer cleanup.Stop()
 
 	// Always initialize the timer so don't have a nil pointer in the case below. It won't get rearmed after that.
-	govTimer := time.NewTimer(time.Minute)
+	govTimer := time.NewTicker(time.Minute)
+	defer govTimer.Stop()
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
-		case p.gs = <-p.setC:
-			p.logger.Info("guardian set updated",
-				zap.Strings("set", p.gs.KeysAsHexStrings()),
-				zap.Uint32("index", p.gs.Index))
-			p.gst.Set(p.gs)
 		case k := <-p.lockC:
+			p.logger.Info("saw new VAA")
 			if p.governor != nil {
 				if !p.governor.ProcessMsg(k) {
 					continue
 				}
 			}
-			p.handleMessage(ctx, k)
-		case v := <-p.injectC:
-			p.handleInjection(ctx, v)
-		case m := <-p.obsvC:
-			p.handleObservation(ctx, m)
-		case m := <-p.signedInC:
-			p.handleInboundSignedVAAWithQuorum(ctx, m)
-		case <-p.cleanup.C:
-			p.handleCleanup(ctx)
+			gs := p.manager.GuardianSet()
+			if gs == nil {
+				p.logger.Warn("received observation before guardian set was known - skipping")
+				continue
+			}
+			v := MessagePublicationToVAA(k, gs)
+			p.attestationEvents.ReportMessagePublication(&reporter.MessagePublication{
+				VAA:            *v,
+				InitiatingTxID: k.TxHash,
+			})
+			p.obsC <- v
+		case <-cleanup.C:
+		// TODO p.handleCleanup(ctx)
+		case s := <-p.signedInC:
+			p.handleSignedVAA(s)
 		case <-govTimer.C:
 			if p.governor != nil {
 				toBePublished, err := p.governor.CheckPending()
@@ -223,16 +134,116 @@ func (p *Processor) Run(ctx context.Context) error {
 				}
 				if len(toBePublished) != 0 {
 					for _, k := range toBePublished {
-						p.handleMessage(ctx, k)
+						gs := p.manager.GuardianSet()
+						if gs == nil {
+							p.logger.Warn("received observation before guardian set was known - skipping")
+							continue
+						}
+						p.obsC <- MessagePublicationToVAA(k, gs)
 					}
 				}
-				govTimer = time.NewTimer(time.Minute)
 			}
 		}
 	}
 }
 
-func (p *Processor) storeSignedVAA(v *vaa.VAA) error {
+func (p *VAAReactor) handleSignedVAA(m *gossipv1.SignedVAAWithQuorum) {
+	v, err := vaa.Unmarshal(m.Vaa)
+	if err != nil {
+		p.logger.Warn("received invalid VAA in SignedVAAWithQuorum message",
+			zap.Error(err), zap.Any("message", m))
+		return
+	}
+
+	// Calculate digest for logging
+	digest := v.SigningMsg()
+	hash := hex.EncodeToString(digest.Bytes())
+
+	gs := p.manager.GuardianSet()
+	if gs == nil {
+		p.logger.Warn("dropping SignedVAAWithQuorum message since we haven't initialized our guardian set yet",
+			zap.String("digest", hash),
+			zap.Any("message", m),
+		)
+		return
+	}
+
+	if err := v.Verify(gs.Keys); err != nil {
+		p.logger.Warn("dropping SignedVAAWithQuorum message because it failed verification", zap.Error(err))
+		return
+	}
+
+	// We now established that:
+	//  - all signatures on the VAA are valid
+	//  - the signature's addresses match the node's current guardian set
+	//  - enough signatures are present for the VAA to reach quorum
+
+	// Check if we already store this VAA
+	_, err = p.getSignedVAA(*db.VaaIDFromVAA(v))
+	if err == nil {
+		p.logger.Debug("ignored SignedVAAWithQuorum message for VAA we already store",
+			zap.String("digest", hash),
+		)
+		return
+	} else if err != db.ErrVAANotFound {
+		p.logger.Error("failed to look up VAA in database",
+			zap.String("digest", hash),
+			zap.Error(err),
+		)
+		return
+	}
+
+	// Store signed VAA in database.
+	p.logger.Info("storing inbound signed VAA with quorum",
+		zap.String("digest", hash),
+		zap.Any("vaa", v),
+		zap.String("bytes", hex.EncodeToString(m.Vaa)),
+		zap.String("message_id", v.MessageID()))
+
+	if err := p.storeSignedVAA(v); err != nil {
+		p.logger.Error("failed to store signed VAA", zap.Error(err))
+		return
+	}
+	p.attestationEvents.ReportVAAQuorum(v)
+}
+
+func (p *VAAReactor) HandleQuorum(observation *vaa.VAA, signatures []*vaa.Signature) {
+	observation.Signatures = signatures
+
+	vaaBytes, err := observation.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	// Store signed VAA in database.
+	p.logger.Info("signed VAA with quorum",
+		zap.String("digest", observation.SigningMsg().Hex()),
+		zap.Any("vaa", observation),
+		zap.String("bytes", hex.EncodeToString(vaaBytes)),
+		zap.String("message_id", observation.MessageID()))
+
+	if err := p.storeSignedVAA(observation); err != nil {
+		p.logger.Error("failed to store signed VAA", zap.Error(err))
+	}
+
+	p.broadcastSignedVAA(observation)
+	p.attestationEvents.ReportVAAQuorum(observation)
+}
+
+func (p *VAAReactor) HandleFinalization(observation *vaa.VAA, signatures []*vaa.Signature) {
+	// TODO store with full signatures
+}
+
+func (p *VAAReactor) HandleTimeout(previousState reactor.State, observation *vaa.VAA, signatures []*vaa.Signature) {
+	// TODO store all signatures still?
+}
+
+type PythNetVaaEntry struct {
+	v          *vaa.VAA
+	updateTime time.Time // Used for determining when to delete entries
+}
+
+func (p *VAAReactor) storeSignedVAA(v *vaa.VAA) error {
 	if v.EmitterChain == vaa.ChainIDPythNet {
 		key := fmt.Sprintf("%v/%v", v.EmitterAddress, v.Sequence)
 		p.pythnetVaas[key] = PythNetVaaEntry{v: v, updateTime: time.Now()}
@@ -241,7 +252,7 @@ func (p *Processor) storeSignedVAA(v *vaa.VAA) error {
 	return p.db.StoreSignedVAA(v)
 }
 
-func (p *Processor) getSignedVAA(id db.VAAID) (*vaa.VAA, error) {
+func (p *VAAReactor) getSignedVAA(id db.VAAID) (*vaa.VAA, error) {
 	if id.EmitterChain == vaa.ChainIDPythNet {
 		key := fmt.Sprintf("%v/%v", id.EmitterAddress, id.Sequence)
 		ret, exists := p.pythnetVaas[key]
@@ -257,10 +268,43 @@ func (p *Processor) getSignedVAA(id db.VAAID) (*vaa.VAA, error) {
 		return nil, err
 	}
 
-	vaa, err := vaa.Unmarshal(vb)
+	v, err := vaa.Unmarshal(vb)
 	if err != nil {
 		panic("failed to unmarshal VAA from db")
 	}
 
-	return vaa, err
+	return v, err
+}
+
+func (p *VAAReactor) broadcastSignedVAA(v *vaa.VAA) {
+	b, err := v.Marshal()
+	if err != nil {
+		panic(err)
+	}
+
+	w := gossipv1.GossipMessage{Message: &gossipv1.GossipMessage_SignedVaaWithQuorum{
+		SignedVaaWithQuorum: &gossipv1.SignedVAAWithQuorum{Vaa: b},
+	}}
+
+	msg, err := proto.Marshal(&w)
+	if err != nil {
+		panic(err)
+	}
+
+	p.sendC <- msg
+}
+
+func MessagePublicationToVAA(k *common.MessagePublication, gs *common.GuardianSet) *vaa.VAA {
+	return &vaa.VAA{
+		Version:          vaa.SupportedVAAVersion,
+		GuardianSetIndex: gs.Index,
+		Signatures:       nil,
+		Timestamp:        k.Timestamp,
+		Nonce:            k.Nonce,
+		EmitterChain:     k.EmitterChain,
+		EmitterAddress:   k.EmitterAddress,
+		Payload:          k.Payload,
+		Sequence:         k.Sequence,
+		ConsistencyLevel: k.ConsistencyLevel,
+	}
 }

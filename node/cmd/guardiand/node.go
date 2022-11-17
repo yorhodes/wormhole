@@ -11,6 +11,8 @@ import (
 	"path"
 	"strings"
 
+	"github.com/certusone/wormhole/node/pkg/processor"
+
 	"github.com/certusone/wormhole/node/pkg/watchers/wormchain"
 
 	"github.com/certusone/wormhole/node/pkg/watchers/cosmwasm"
@@ -23,7 +25,6 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/certusone/wormhole/node/pkg/db"
-	"github.com/certusone/wormhole/node/pkg/notify/discord"
 	"github.com/certusone/wormhole/node/pkg/telemetry"
 	"github.com/certusone/wormhole/node/pkg/version"
 	"github.com/gagliardetto/solana-go/rpc"
@@ -37,7 +38,6 @@ import (
 	"github.com/certusone/wormhole/node/pkg/devnet"
 	"github.com/certusone/wormhole/node/pkg/governor"
 	"github.com/certusone/wormhole/node/pkg/p2p"
-	"github.com/certusone/wormhole/node/pkg/processor"
 	gossipv1 "github.com/certusone/wormhole/node/pkg/proto/gossip/v1"
 	"github.com/certusone/wormhole/node/pkg/readiness"
 	"github.com/certusone/wormhole/node/pkg/reporter"
@@ -792,22 +792,11 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Outbound observation requests
 	obsvReqSendC := make(chan *gossipv1.ObservationRequest, common.ObsvReqChannelSize)
 
-	// Injected VAAs (manually generated rather than created via observation)
-	injectC := make(chan *vaa.VAA)
-
 	// Guardian set state managed by processor
 	gst := common.NewGuardianSetState(nil)
 
 	// Per-chain observation requests
 	chainObsvReqC := make(map[vaa.ChainID]chan *gossipv1.ObservationRequest)
-
-	var notifier *discord.DiscordNotifier
-	if *discordToken != "" {
-		notifier, err = discord.NewDiscordNotifier(*discordToken, *discordChannel, logger)
-		if err != nil {
-			logger.Error("failed to initialize Discord bot", zap.Error(err))
-		}
-	}
 
 	// Load p2p private key
 	var priv crypto.PrivKey
@@ -887,7 +876,7 @@ func runNode(cmd *cobra.Command, args []string) {
 	}
 
 	// local admin service socket
-	adminService, err := adminServiceRunnable(logger, *adminSocketPath, injectC, signedInC, obsvReqSendC, db, gst, gov)
+	adminService, err := adminServiceRunnable(logger, *adminSocketPath, lockC, signedInC, obsvReqSendC, db, gst, gov)
 	if err != nil {
 		logger.Fatal("failed to create admin service socket", zap.Error(err))
 	}
@@ -1191,23 +1180,17 @@ func runNode(cmd *cobra.Command, args []string) {
 			}
 		}
 
-		p := processor.NewProcessor(ctx,
+		p := processor.NewVAAReactor(
 			db,
 			lockC,
 			setC,
 			sendC,
 			obsvC,
 			obsvReqSendC,
-			injectC,
 			signedInC,
 			gk,
 			gst,
-			*unsafeDevMode,
-			*devNumGuardians,
-			*ethRPC,
-			*wormchainLCD,
 			attestationEvents,
-			notifier,
 			gov,
 		)
 		if err := supervisor.Run(ctx, "processor", p.Run); err != nil {
