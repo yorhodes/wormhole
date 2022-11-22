@@ -96,7 +96,7 @@ spec:
             periodSeconds: 1
           resources:
             limits:
-              memory: "1G"
+              memory: "2000Mi"
         - name: setup
           image: bridge-client
           command:

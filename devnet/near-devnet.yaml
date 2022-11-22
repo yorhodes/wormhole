@@ -59,11 +59,15 @@ spec:
           command:
             - /bin/sh
             - -c
-            - "sh /app/devnet_deploy.sh && touch success && sleep infinity"
+            - "sh /app/devnet_deploy.sh && touch /app/success && sleep infinity"
           readinessProbe:
-            tcpSocket:
-              port: 3030
+            exec:
+              command:
+                - test
+                - -e
+                - "/app/success"
             periodSeconds: 1
+            failureThreshold: 300
             initialDelaySeconds: 15
           resources:
             limits:

@@ -52,7 +52,13 @@ spec:
             - containerPort: 8081
               name: faucet
               protocol: TCP
+          startupProbe:
+            tcpSocket:
+              port: 8081
+            failureThreshold: 60
+            periodSeconds: 10
           readinessProbe:
+            periodSeconds: 1
             tcpSocket:
               port: 8081
           resources:
@@ -63,15 +69,16 @@ spec:
           command: ["/bin/bash", "-c"]
           args:
             [
-              "cd /tmp/scripts && ./wait_for_devnet && ./deploy devnet && ./register_devnet && touch success && sleep infinity",
+              "cd /tmp/scripts && ./wait_for_devnet && ./deploy devnet && ./register_devnet && touch /tmp/scripts/success && sleep infinity",
             ]
           readinessProbe:
             periodSeconds: 1
             failureThreshold: 300
             exec:
               command:
-                - cat
-                - /tmp/scripts/success
+                - test
+                - -e
+                - "/tmp/scripts/success"
           resources:
             limits:
               memory: "500Mi"

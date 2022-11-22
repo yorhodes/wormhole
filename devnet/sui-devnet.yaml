@@ -63,5 +63,5 @@ spec:
               port: 9002
           resources:
             limits:
-              memory: "100Mi"
+              memory: "200Mi"
       restartPolicy: Always
