@@ -43,7 +43,6 @@ spec:
           name: algorand-postgres
           ports:
             - containerPort: 5432
-          resources: {}
           env:
             - name: POSTGRES_USER
               value: algorand
@@ -51,6 +50,9 @@ spec:
               value: algorand
             - name: POSTGRES_DB
               value: indexer_db
+          resources:
+            limits:
+              memory: "80Mi"
         - name: algorand-algod
           image: algorand-algod
           command:
@@ -67,6 +69,9 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 4001
+          resources:
+            limits:
+              memory: "800Mi"
         - name: algorand-indexer
           image: algorand-indexer
           command:
@@ -80,6 +85,9 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 8980
+          resources:
+            limits:
+              memory: "100Mi"
         - name: algorand-contracts
           image: algorand-contracts
           command:
@@ -94,4 +102,7 @@ spec:
                 - "success"
             initialDelaySeconds: 5
             periodSeconds: 5
+          resources:
+            limits:
+              memory: "200Mi"
       restartPolicy: Always

@@ -178,7 +178,5 @@ spec:
                   - -c
                   - kill guardiand
           resources:
-            requests:
-              memory: "5000Mi"
             limits:
               memory: "5000Mi"

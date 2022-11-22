@@ -56,3 +56,6 @@ spec:
             - containerPort: 8082
               name: prometheus
               protocol: TCP
+          resources:
+            limits:
+              memory: "400Mi"

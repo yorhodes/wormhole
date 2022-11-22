@@ -22,6 +22,9 @@ spec:
                 - "/app/testing/success"
             initialDelaySeconds: 5
             periodSeconds: 5
+          resources:
+            limits:
+              memory: "100Mi"
 ---
 kind: Job
 apiVersion: batch/v1
@@ -47,3 +50,6 @@ spec:
                 - "/app/testing/success"
             initialDelaySeconds: 5
             periodSeconds: 5
+          resources:
+            limits:
+              memory: "100Mi"

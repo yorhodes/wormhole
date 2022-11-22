@@ -42,8 +42,8 @@ spec:
         - name: sui-node
           image: sui-node
           command:
-            - /bin/sh 
-            - -c 
+            - /bin/sh
+            - -c
             - /tmp/start_node.sh
           ports:
             - containerPort: 9002
@@ -61,5 +61,7 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 9002
-
+          resources:
+            limits:
+              memory: "100Mi"
       restartPolicy: Always

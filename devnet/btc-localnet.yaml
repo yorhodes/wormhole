@@ -43,3 +43,6 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 18557
+          resources:
+            limits:
+              memory: "200Mi"

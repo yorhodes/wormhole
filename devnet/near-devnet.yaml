@@ -51,6 +51,9 @@ spec:
           readinessProbe:
             tcpSocket:
               port: 3030
+          resources:
+            limits:
+              memory: "1Gi"
         - name: near-deploy
           image: near-deploy
           command:
@@ -62,5 +65,8 @@ spec:
               port: 3030
             periodSeconds: 1
             initialDelaySeconds: 15
+          resources:
+            limits:
+              memory: "200Mi"
 
       restartPolicy: Always

@@ -58,3 +58,6 @@ spec:
             httpGet:
               port: 6060
               path: /metrics
+          resources:
+            limits:
+              memory: "500Mi"

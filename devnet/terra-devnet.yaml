@@ -72,6 +72,9 @@ spec:
             httpGet:
               port: 26657
           resources: {}
+          resources:
+            limits:
+              memory: "100Mi"
         - name: terra-contracts
           image: terra-contracts
           command:
@@ -86,6 +89,9 @@ spec:
                 - "/app/tools/success"
             initialDelaySeconds: 5
             periodSeconds: 5
+          resources:
+            limits:
+              memory: "100Mi"
       restartPolicy: Always
   serviceName: terra-terrad
 ---
@@ -118,6 +124,9 @@ spec:
               value: dev
             - name: POSTGRES_DB
               value: fcd
+          resources:
+            limits:
+              memory: "100Mi"
       restartPolicy: Always
   serviceName: terra-fcd
 ---
@@ -170,6 +179,9 @@ spec:
               value: "false"
             - name: TYPEORM_ENTITIES
               value: "src/orm/*Entity.ts"
+          resources:
+            limits:
+              memory: "100Mi"
         - image: terramoney/fcd:bombay
           name: fcd-api
           command:
@@ -204,5 +216,8 @@ spec:
               value: "false"
             - name: TYPEORM_ENTITIES
               value: "src/orm/*Entity.ts"
+          resources:
+            limits:
+              memory: "100Mi"
       restartPolicy: Always
   serviceName: terra-fcd

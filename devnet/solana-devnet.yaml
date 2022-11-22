@@ -94,6 +94,9 @@ spec:
               port: rpc
               path: /health
             periodSeconds: 1
+          resources:
+            limits:
+              memory: "1G"
         - name: setup
           image: bridge-client
           command:
@@ -103,3 +106,6 @@ spec:
               port: 2000
             periodSeconds: 1
             failureThreshold: 300
+          resources:
+            limits:
+              memory: "1G"

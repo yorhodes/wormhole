@@ -42,3 +42,6 @@ spec:
             - containerPort: 6379
               name: redis
               protocol: TCP
+          resources:
+            limits:
+              memory: "100Mi"

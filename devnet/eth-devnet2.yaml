@@ -46,8 +46,6 @@ spec:
             tcpSocket:
               port: rpc
           resources:
-            requests:
-              memory: "300Mi"
             limits:
               memory: "500Mi"
         - name: tests
@@ -63,7 +61,5 @@ spec:
             tcpSocket:
               port: 2000
           resources:
-            requests:
-              memory: "750Mi"
             limits:
               memory: "1G"

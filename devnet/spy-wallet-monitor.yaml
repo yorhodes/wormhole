@@ -53,3 +53,6 @@ spec:
               port: 2000
             periodSeconds: 1
             failureThreshold: 300
+          resources:
+            limits:
+              memory: "100Mi"
