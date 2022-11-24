@@ -74,7 +74,7 @@ spec:
           resources: {}
           resources:
             limits:
-              memory: "100Mi"
+              memory: "2Gi"
         - name: terra2-contracts
           image: terra2-contracts
           command:
@@ -91,7 +91,7 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              memory: "100Mi"
+              memory: "200Mi"
       restartPolicy: Always
   serviceName: terra2-terrad
 ---
@@ -126,7 +126,7 @@ spec:
               value: fcd
           resources:
             limits:
-              memory: "100Mi"
+              memory: "50Mi"
       restartPolicy: Always
   serviceName: terra2-fcd
 ---
@@ -181,7 +181,7 @@ spec:
               value: "src/orm/*Entity.ts"
           resources:
             limits:
-              memory: "100Mi"
+              memory: "500Mi"
         - image: terramoney/fcd:2.0.5
           name: fcd-api
           command:
@@ -218,6 +218,6 @@ spec:
               value: "src/orm/*Entity.ts"
           resources:
             limits:
-              memory: "100Mi"
+              memory: "200Mi"
       restartPolicy: Always
   serviceName: terra2-fcd

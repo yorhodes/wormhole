@@ -53,7 +53,7 @@ spec:
               port: 3030
           resources:
             limits:
-              memory: "1Gi"
+              memory: "1000Mi"
         - name: near-deploy
           image: near-deploy
           command:
@@ -71,6 +71,6 @@ spec:
             initialDelaySeconds: 15
           resources:
             limits:
-              memory: "200Mi"
+              memory: "500Mi"
 
       restartPolicy: Always

@@ -60,4 +60,7 @@ spec:
               path: /metrics
           resources:
             limits:
-              memory: "500Mi"
+              memory: "120Mi" # don't forget to change memory resource limit below accordingly
+          env:
+          - name: GOMEMLIMIT
+            value: 120MiB # don't forget to change memory resource limit above accordingly

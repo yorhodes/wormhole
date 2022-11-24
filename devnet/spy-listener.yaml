@@ -58,4 +58,4 @@ spec:
               protocol: TCP
           resources:
             limits:
-              memory: "400Mi"
+              memory: "150Mi"

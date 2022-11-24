@@ -45,4 +45,4 @@ spec:
               port: 18557
           resources:
             limits:
-              memory: "600Mi"
+              memory: "350Mi"

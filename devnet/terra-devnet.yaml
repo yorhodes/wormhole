@@ -74,7 +74,7 @@ spec:
           resources: {}
           resources:
             limits:
-              memory: "500Mi"
+              memory: "2Gi"
         - name: terra-contracts
           image: terra-contracts
           command:
@@ -87,11 +87,12 @@ spec:
                 - test
                 - -e
                 - "/app/tools/success"
-            initialDelaySeconds: 5
-            periodSeconds: 5
+            initialDelaySeconds: 30
+            periodSeconds: 1
+            failureThreshold: 300
           resources:
             limits:
-              memory: "500Mi"
+              memory: "200Mi"
       restartPolicy: Always
   serviceName: terra-terrad
 ---
@@ -126,7 +127,7 @@ spec:
               value: fcd
           resources:
             limits:
-              memory: "100Mi"
+              memory: "50Mi"
       restartPolicy: Always
   serviceName: terra-fcd
 ---
@@ -181,14 +182,13 @@ spec:
               value: "src/orm/*Entity.ts"
           resources:
             limits:
-              memory: "100Mi"
+              memory: "500Mi"
         - image: terramoney/fcd:bombay
           name: fcd-api
           command:
             - sh
             - -c
             - "sed -i \"s/level: \\'info\\'/level: \\'warn\\'/g\" src/lib/logger.ts && ./entrypoint.sh start"
-          resources: {}
           ports:
             - containerPort: 3060
           env:
@@ -218,6 +218,6 @@ spec:
               value: "src/orm/*Entity.ts"
           resources:
             limits:
-              memory: "1000Mi"
+              memory: "200Mi"
       restartPolicy: Always
   serviceName: terra-fcd
