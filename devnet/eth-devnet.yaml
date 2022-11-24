@@ -51,6 +51,26 @@ spec:
           resources:
             limits:
               memory: "500Mi"
+        - name: mine
+          image: eth-node
+          command:
+            - /bin/sh
+            - -c
+            - "npx truffle exec mine.js"
+          resources:
+            limits:
+              memory: "300Mi"
+---
+kind: Job
+apiVersion: batch/v1
+metadata:
+  name: eth-tests
+spec:
+  backoffLimit: 0
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
         - name: tests
           image: eth-node
           stdin: true
@@ -66,12 +86,3 @@ spec:
           resources:
             limits:
               memory: "1Gi"
-        - name: mine
-          image: eth-node
-          command:
-            - /bin/sh
-            - -c
-            - "npx truffle exec mine.js"
-          resources:
-            limits:
-              memory: "300Mi"
