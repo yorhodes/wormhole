@@ -24,7 +24,7 @@ spec:
             periodSeconds: 5
           resources:
             limits:
-              memory: "3000Mi"
+              memory: "2500Mi"
 ---
 kind: Job
 apiVersion: batch/v1

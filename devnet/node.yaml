@@ -181,7 +181,7 @@ spec:
                   - kill guardiand
           resources:
             limits:
-              memory: "5000Mi" # don't forget to change GOMEMLIMIT below
+              memory: "4000Mi" # don't forget to change GOMEMLIMIT below
           env:
           - name: GOMEMLIMIT
-            value: 5000MiB # don't forget to change memory resource limit above accordingly
+            value: 4000MiB # don't forget to change memory resource limit above accordingly
