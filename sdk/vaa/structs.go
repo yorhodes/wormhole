@@ -265,6 +265,38 @@ func ChainIDFromString(s string) (ChainID, error) {
 	}
 }
 
+func GetAllNetworkIDs() []ChainID {
+	return []ChainID{
+		ChainIDSolana,
+		ChainIDEthereum,
+		ChainIDTerra,
+		ChainIDBSC,
+		ChainIDPolygon,
+		ChainIDAvalanche,
+		ChainIDAlgorand,
+		ChainIDAptos,
+		ChainIDSui,
+		ChainIDOasis,
+		ChainIDAurora,
+		ChainIDFantom,
+		ChainIDKarura,
+		ChainIDAcala,
+		ChainIDKlaytn,
+		ChainIDCelo,
+		ChainIDNear,
+		ChainIDTerra2,
+		ChainIDPythNet,
+		ChainIDMoonbeam,
+		ChainIDArbitrum,
+		ChainIDOptimism,
+		ChainIDXpla,
+		ChainIDBtc,
+		ChainIDInjective,
+		ChainIDNeon,
+		ChainIDWormchain,
+	}
+}
+
 const (
 	ChainIDUnset ChainID = 0
 	// ChainIDSolana is the ChainID of Solana
