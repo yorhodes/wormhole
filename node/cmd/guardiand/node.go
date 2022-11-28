@@ -845,8 +845,8 @@ func runNode(cmd *cobra.Command, args []string) {
 	// Per-chain msgC
 	chainMsgC := make(map[vaa.ChainID]chan *common.MessagePublication)
 	// aggregate per-chain msgC into msgC.
-	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmitterChain to its chainId.
-	for _, chainId := range vaa.GetAllNetworkIDs() { // TODO maybe not use KnownTokenbridgeEmitters here and think about adding just a list of chainIds to the sdk mainnet_consts.go
+	// SECURITY defense-in-depth: This way we enforce that a watcher must set the msg.EmitterChain to its chainId, which makes the code easier to audit
+	for _, chainId := range vaa.GetAllNetworkIDs() {
 		chainMsgC[chainId] = make(chan *common.MessagePublication)
 		go func(c <-chan *common.MessagePublication, chainId vaa.ChainID) {
 			select {
