@@ -31,7 +31,7 @@
 | spydk-ci-tests     | ?              | 1000Mi    | job          |
 
 ## Debugging
-* oomkill messages should be in `/var/log/messages`.
+* oomkill messages should be in `/var/log/messages`. E.g.: `Nov 27 01:26:57 hostname kernel: oom-kill:constraint=CONSTRAINT_MEMCG,nodemask=(null),cpuset=2d90ae0dc04950f146d262fd80f1da3b4bbc69cf059b2bb7c66616d35e4d3ffd,mems_allowed=0,oom_memcg=/docker/8b5e1b8686b3a5082ea70faa5809e3053bb1f75077ce19236582b6d67190a48a/kubepods/burstable/podda04e81e-3992-4dd3-aea5-112148b37b9e/2d90ae0dc04950f146d262fd80f1da3b4bbc69cf059b2bb7c66616d35e4d3ffd,task_memcg=/docker/8b5e1b8686b3a5082ea70faa5809e3053bb1f75077ce19236582b6d67190a48a/kubepods/burstable/podda04e81e-3992-4dd3-aea5-112148b37b9e/2d90ae0dc04950f146d262fd80f1da3b4bbc69cf059b2bb7c66616d35e4d3ffd,task=near-sandbox,pid=3723608,uid=0`
 * kubectl top:
     * Enable metrics server: `minikube addons enable metrics-server`
     * Wait for ~60s (metrics are usually collected every minute)
