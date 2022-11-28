@@ -428,7 +428,7 @@ func (w *Watcher) Run(ctx context.Context) error {
 								zap.Uint64("observed_block", blockNumber),
 								zap.String("eth_network", w.networkName),
 							)
-							w.msgChan <- msg
+							w.msgC <- msg
 						} else {
 							logger.Info("ignoring re-observed message publication transaction",
 								zap.Stringer("tx", msg.TxHash),
